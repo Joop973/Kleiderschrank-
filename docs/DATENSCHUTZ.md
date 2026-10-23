@@ -19,6 +19,7 @@ Arbeitsdokument; ersetzt keine geprüfte Datenschutzerklärung.
 ## Datenflüsse
 - **Anonymes Gerätekonto** (Plan 7.9): zufällige Konto-ID bei Supabase, keine E-Mail, keine Schrankdaten. Zweck: Schutz der KI-Schnittstelle, Kontingent. Löschung über "Konto löschen" oder nach 12 Monaten ohne Nutzung.
 - **Echtheitsprüfung** (App Attest / Play Integrity): Ergebnis (geprüft/fehlgeschlagen, Zeitpunkt) am Gerätekonto. Apple bzw. Google verarbeiten dabei Gerätesignale; in Datenschutzerklärung nennen.
+- **Prototyp (Expo Go):** Freistellen per U²-Net auf dem Gerät; Kleidungs- und Etikettfotos (verkleinert, ohne Metadaten) gehen an die KI; keine Fotos mit Personen (Spiegel-Selfie entfällt); keine Echtheitsprüfung.
 - Weitere Flüsse werden ab Phase 2 ergänzt.
 
 ## Checkliste
