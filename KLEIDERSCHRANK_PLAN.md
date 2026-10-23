@@ -1,0 +1,644 @@
+# [APP-NAME] – Bauplan für Claude Code (Version 2: einfacher Kern + Erweiterungen)
+
+> Die einfachste Kleiderschrank-App: morgens ein Blick, ein Tipp, angezogen.
+> Kern: Kamera-Knopf mit Etikett-Scan, ein Outfit pro Tag, "Anziehen"-Knopf.
+> Alles Weitere sind **Erweiterungen**, die jeder Nutzer selbst einschalten kann.
+> Deutsch, privat by default, offline nutzbar.
+>
+> Stand: Oktober 2026. Preise, Grenzen und Regeln von Drittanbietern vor der Umsetzung jeweils kurz prüfen.
+
+---
+
+## 0. Anleitung für Claude Code (zuerst lesen)
+
+Diese Datei (`KLEIDERSCHRANK_PLAN.md`) ist die verbindliche Grundlage für das gesamte Projekt.
+
+**Arbeitsregeln**
+
+1. Arbeite immer nur an **einer Phase** (Abschnitt 17). Keine neue Phase, bevor alle Abnahmekriterien der aktuellen erfüllt und abgehakt sind.
+2. Zu Beginn jeder Sitzung: diese Datei und `CLAUDE.md` lesen, Stand in `docs/FORTSCHRITT.md` prüfen.
+3. Vor größeren Änderungen einen kurzen Plan in Stichpunkten vorschlagen und auf Freigabe warten.
+4. Jede Phase in einem eigenen Git-Branch (`phase-XX-name`), kleine Commits mit deutschen Commit-Nachrichten. **Ausnahme:** Gibt die Claude-Code-Sitzung einen Branch vor, wird dieser verwendet (siehe `docs/ENTSCHEIDUNGEN.md`).
+5. Alle sichtbaren Texte über `src/i18n/de.json`, nie fest im Code.
+6. Keine API-Schlüssel im App-Code. KI-Schlüssel nur in Supabase Edge Functions.
+7. Geschäftslogik (Fototyp-Erkennung, Gruppierung, Outfit-Regeln, Farblogik, Größen, Waschgruppen, Preis pro Tragen, Limits) immer mit Unit-Tests.
+8. Wenn etwas technisch nicht geht oder es eine deutlich bessere Lösung gibt: **anhalten, begründen, Alternative vorschlagen**.
+9. Nach jeder Sitzung `docs/FORTSCHRITT.md` aktualisieren.
+10. Der Entwickler arbeitet **nur vom Smartphone, ohne Mac**. Alles muss über GitHub, Expo EAS und das Handy testbar sein (Abschnitt 16).
+11. **Riskantes zuerst als Machbarkeitstest**, dann Oberfläche.
+12. **Die Einfachheits-Regeln (Abschnitt 2) sind Abnahmekriterien jeder Phase.** Eine Funktion, die sie verletzt, gilt als nicht fertig.
+13. **Der Kern kennt keine Erweiterung.** Erweiterungen docken nur über Steckplätze an (Abschnitt 7.5). Kern-Code darf nie aus `src/extensions/` importieren.
+14. Wiederverwendbare Teile (Design-System, Erinnerungsplaner, KI-Schnittstelle) in `src/shared/` ohne App-spezifische Abhängigkeiten.
+
+---
+
+## 1. Vision und Zielgruppe
+
+**Ein Satz:** Die App kennt deinen Schrank so genau wie die Etiketten selbst und zeigt dir jeden Tag ein Outfit, das passt.
+
+**Zielgruppe:** Alle, die morgens Zeit und Nerven sparen und ihre Kleidung besser nutzen wollen, ausdrücklich auch Menschen, die mit Technik wenig am Hut haben. Was für ADHS hilft (ein Vorschlag, Vorabend-Outfit, keine Entscheidungen), ist **Standard für alle**. Wer mehr will, schaltet Erweiterungen dazu.
+
+**Kernversprechen**
+1. **Ein Blick, ein Tipp:** Outfit ansehen, "Anziehen", fertig.
+2. **Fotografieren statt tippen:** ein Kamera-Knopf für alles, die App versteht selbst, was sie sieht.
+3. **Bessere Käufe:** Kaufcheck im Laden mit der gleichen Kamera.
+4. **Privat:** Fotos bleiben auf dem Handy, keine Werbung, keine Community, kein Konto nötig.
+
+**Abgrenzung (Recherche Oktober 2026):** Acloset, GetWardrobe, Whering, Alta, Clueless, Cladwell bieten Foto, Kategorie, Farbe, Outfits, teils Wetter, Kalender, Kosten pro Tragen. Unser Unterschied: **Etikett als Datenquelle**, **ein Kamera-Knopf mit automatischer Erkennung**, **radikal einfache Bedienung**. Bekannte Kritik an der Konkurrenz, die wir vermeiden: Abstürze, Langsamkeit, schlechte Hintergrundentfernung ohne Korrektur, zu viel Handarbeit, generische Vorschläge ohne Accessoires, Werbung.
+
+---
+
+## 2. Einfachheits-Regeln (verbindlich, messbar)
+
+1. **5-Sekunden-Regel:** Jeder Bildschirm ist in 5 Sekunden verstanden.
+2. **Eine Hauptaktion pro Bildschirm**, als großer Knopf. Alles andere ist kleiner oder versteckt.
+3. **Höchstens 3 Tipps** für jede häufige Aufgabe (Outfit annehmen, Teil anlegen, getragen eintragen, Kaufcheck, Wäsche erledigt).
+4. **Drei Bereiche:** Heute, Schrank, Kamera-Knopf. Nicht mehr.
+5. **Keine Formulare.** Stattdessen Bestätigungskarten: "Stimmt das?" → Ja, oder auf den falschen Teil tippen.
+6. **Nur Unsicheres wird einzeln gefragt.** Pro Teil gibt es eine Karte mit kurzer Zusammenfassung und einem "Ja"; sichere Werte stehen nur in der Zusammenfassung, unsichere sind hervorgehoben. Alles bleibt jederzeit änderbar.
+7. **Keine Pflichtfelder.** Fehlendes darf fehlen.
+8. **Bilder vor Worten.** Kategorien als Bilder, höchstens 8 auf einmal sichtbar.
+9. **Rückgängig statt Nachfragen.** Keine "Bist du sicher?"-Dialoge außer bei Konto löschen.
+10. **Standardwerte statt Einstellungen.** Die Einstellungen passen auf einen Bildschirm.
+11. **Höchstens 1 Benachrichtigung pro Tag** im Standard (das Vorabend-Outfit) und **höchstens 1 Hinweiskarte pro Tag** auf "Heute".
+12. **Alltagssprache:** "Preis pro Tragen", "Wirkt deine Haut eher warm oder kühl?", keine Fachbegriffe, keine Anglizismen.
+13. **Erweiterungen sind aus**, bis der Nutzer sie einschaltet.
+14. **Nutzertest:** Vor dem Abschluss jeder Phase mit Oberfläche testen mindestens **5 Personen ohne Technik-Affinität** (z. B. Familie, Kollegen) die neuen Abläufe ohne Erklärung. Ergebnisse in `docs/NUTZERTESTS.md`. Was 2 oder mehr Personen nicht schaffen, wird vereinfacht.
+
+---
+
+## 3. Bedienkonzept
+
+### 3.1 Aufbau
+
+```
+┌───────────────────────────────┐
+│  Heute              (●) Mehr   │  ← Mehr: Erweiterungen, Einstellungen, Hilfe, Datenschutz
+│                                │
+│   [ Outfit-Bild, groß ]        │  ← Teile antippen = nur dieses Teil tauschen
+│   "Passt zu 14 °C und Regen"   │
+│   Jacke mitnehmen ab 17 Uhr    │
+│                                │
+│   [   Anziehen   ]  Anderes →  │
+│   (Hinweiskarte, max. 1)       │
+├───────────────────────────────┤
+│  Heute    ( ◉ Kamera )  Schrank│
+└───────────────────────────────┘
+```
+
+- **Heute:** ein Outfit, "Anziehen" (Hauptaktion), "Anderes" (Wischen oder Tippen), darunter höchstens eine Hinweiskarte.
+- **Kamera-Knopf (Mitte):** für alles Neue. Galerie-Symbol unten links in der Kamera.
+- **Schrank:** Bilderraster, Kategorien als Bilder, Suche.
+- **Mehr:** kleines Symbol oben rechts auf "Heute": Erweiterungen, Einstellungen, Hilfe, Datenschutz.
+
+### 3.2 Abläufe (Soll-Tipps in Klammern)
+
+**Morgens (1 Tipp)**
+1. App öffnen oder Widget ansehen → Outfit ist da.
+2. "Anziehen" → eingetragen: getragen, Preis pro Tragen, Wäschestand. Fertig.
+- Andere Schuhe gewünscht: Schuhe im Bild antippen → nächste passende Schuhe.
+
+**Abends (1 Tipp)**
+1. Benachrichtigung zur gewählten Uhrzeit: Bild des Outfits für morgen (Wetter und Termine von morgen).
+2. "Passt" → festgelegt. Morgens erscheint genau dieses Outfit.
+
+**Neues Teil (2–3 Tipps)**
+1. Kamera-Knopf → Teil fotografieren → optional direkt danach Größenschild und Pflegeetikett fotografieren.
+2. App erkennt den Fototyp selbst und ordnet die Fotos dem Teil zu.
+3. Bestätigungskarte: "Blaue Jeans, Levi's, W32/L34, 98 % Baumwolle, 40 °C. Stimmt das?" → "Ja".
+
+**Viele Teile auf einmal**
+1. Kamera → Galerie-Symbol → Fotos markieren → "Hinzufügen".
+2. App sortiert in Teile und zeigt einen Stapel Bestätigungskarten (Wischen = Ja).
+
+**Kaufcheck im Laden (2 Tipps)**
+1. Kamera-Knopf → Teil fotografieren.
+2. App erkennt "nicht im Schrank" und fragt einmal pro Kamera-Sitzung: "Neu für deinen Schrank oder nur prüfen?" → "Nur prüfen".
+3. Ergebnis in drei Zeilen: "Passt zu 9 Outfits", "Ähnlich: deine graue Strickjacke", "Farbe steht dir". Dazu geschätzter Preis pro Tragen.
+
+**Etwas anderes getragen (2 Tipps)**
+1. Kamera-Knopf → Spiegel-Selfie.
+2. App erkennt das Selfie, verpixelt das Gesicht, ordnet die Teile zu: "Heute getragen: Jeans, weißes Hemd, braune Schuhe?" → "Ja".
+
+**Wäsche (1–2 Tipps)**
+- Läuft automatisch über Tragezahl pro Kategorie.
+- Hinweiskarte "12 Teile in der Wäsche. Waschgänge ansehen?" → Vorschlag nach Temperatur und Farbe → "Fertig gewaschen".
+
+**Verkaufen (2 Tipps)**
+- Hinweiskarte (höchstens einmal pro Woche): "Seit 8 Monaten nicht getragen: Verkaufen, spenden oder behalten?" → "Verkaufen" → Anzeigentext ist kopiert, Fotos zum Teilen bereit.
+
+**Farbtyp (freiwillig, ca. 1 Minute)**
+- Nach einer Woche einmalig als Hinweiskarte angeboten: "Willst du wissen, welche Farben dir stehen?"
+- Selfie → Haut wird gemessen → Haare und Augen antippen → ein Bildschirm mit 4 Reglern → Palette.
+
+### 3.3 Einstellungen (ein Bildschirm)
+- Uhrzeit Vorabend-Outfit (Standard 20:00), Benachrichtigungen an/aus
+- Wohnort für Wetter (automatisch, änderbar)
+- Kalender verwenden an/aus
+- KI an/aus
+- Cloud-Sicherung an/aus (Premium)
+- Erscheinungsbild: Hell, Dunkel, System, Reizarm
+- Erweiterungen (eigener Bildschirm, Abschnitt 5)
+- Datenschutz-Übersicht, Export, Konto löschen, Hilfe, Rechtliches
+
+---
+
+## 4. Kern-Funktionen (Version 1)
+
+Kennzeichnung: **[F]** Gratis, **[P]** Premium, **[F/P]** Gratis mit Grenze. Geldmodell siehe Abschnitt 13.
+
+### Kamera und Erfassung
+- **K01** **Ein Kamera-Knopf, automatische Fototyp-Erkennung:** Kleidungsstück, Größenschild, Pflegeetikett, Spiegel-Selfie. Erkennung auf dem Gerät (Gesicht/Person, Textmenge), unklare Fälle entscheidet die KI im selben Aufruf. **[F]**
+- **K02** **Automatische Gruppierung:** Fotos, die direkt nacheinander gemacht werden, gehören zum selben Teil; ein neues Kleidungsfoto beginnt ein neues Teil. Falsch zugeordnete Fotos per Ziehen umhängen. **[F]**
+- **K03** **Galerie-Stapel:** viele Fotos auf einmal, App sortiert in Teile (Zeitstempel plus Fototyp). **[F/P]**
+- **K04** Freistellen **auf dem Gerät**; Korrektur mit Pinsel versteckt hinter "Bild korrigieren". Tipp bei schlechtem Ergebnis: "Leg das Teil auf einen dunklen Untergrund." **[F]**
+- **K05** Farben **auf dem Gerät** (Haupt- und Nebenfarbe, deutscher Farbname). **[F]**
+- **K06** KI-Erkennung: Kategorie, Muster, Schnitt, Details, Formalität, Jahreszeit. **[F/P]**
+- **K07** **Größenschild:** Marke, Größe (inkl. W/L, EU/US/UK), Material in Prozent. **[F/P]**
+- **K08** **Pflegeetikett:** Symbole → Waschtemperatur, Trockner, Bügeln, Reinigung; daraus Pflegeaufwand (wenig, mittel, viel). Keine Haltbarkeitsnote. **[F/P]**
+- **K09** **Bestätigungskarte statt Formular:** eine Karte pro Teil mit Zusammenfassung in einem Satz und "Ja"; unsichere Werte hervorgehoben; Antippen eines Werts öffnet eine Bildauswahl; Duplikat-Hinweis nur bei hoher Sicherheit. **[F]**
+- **K10** **Teilen aus Shop oder Bestellmail:** Link, Screenshot oder Text an die App teilen → Teil mit Name, Marke, Preis, Größe, Kaufdatum. **[F/P]**
+
+### Heute
+- **K11** **Ein Outfit-Vorschlag:** Wetter (inkl. Tagesverlauf), Termine (Anlass automatisch aus dem Titel), Wäschestand, Material-Wetter-Logik, Farbharmonie, Farbtyp (falls vorhanden), Rotation; vollständig mit Schuhen und Accessoires. Läuft offline. **[F]**
+- **K12** **"Anziehen":** trägt getragen ein, aktualisiert Preis pro Tragen und Wäschestand. **[F]**
+- **K13** **"Anderes" und Teil tauschen:** Wischen = nächstes Outfit; ein Teil antippen = nur dieses Teil ersetzen. **[F]**
+- **K14** **Eine Zeile Begründung** ("Passt zu 14 °C und Regen"), Antippen zeigt mehr. Aus Textbausteinen, ohne KI. **[F]**
+- **K15** **Mitnehm-Hinweis:** "Jacke mitnehmen ab 17 Uhr", "Schirm einpacken". **[F]**
+- **K16** **Vorabend-Outfit:** Benachrichtigung mit Bild, "Passt" legt fest. Standard an, Uhrzeit änderbar. **[F]**
+- **K17** **Lernen mit einer Frage:** höchstens eine kurze Rückfrage pro Tag ("Gestern zu warm?" Ja/Nein), daraus persönliche Gewichte. **[F]**
+- **K18** **Herz** für Lieblingsoutfits; Lieblinge werden häufiger vorgeschlagen. **[F]**
+- **K19** **Hinweiskarten (max. 1 pro Tag)** aus einer Warteschlange mit Prioritäten: Wäsche voll, lange nicht getragen, Verkaufsvorschlag, Farbtyp-Angebot, fehlende Kategorie für Vorschläge, empfohlene Erweiterung. **[F]**
+- **K20** **Startzustand:** Vorschläge ab 3 Teilen (Oberteil, Unterteil, Schuhe); bis dahin zeigt "Heute", was noch fehlt, mit Kamera-Knopf. **[F]**
+
+### Schrank
+- **K21** **Bilderraster**, Kategorien als Bilder, Suche per Text oder Sprache ("blaue Jeans"). **[F]**
+- **K22** **Teil-Ansicht:** Foto, Größe, Marke, Material, Waschsymbole, Preis pro Tragen, zuletzt getragen, Pflegeaufwand; jeder Wert antippbar zum Ändern. **[F]**
+- **K23** **Größenprofil pro Marke** automatisch ("Bei dieser Marke trägst du M"), sichtbar in Teil-Ansicht und Kaufcheck. **[F]**
+- **K24** **Wäsche automatisch:** Tragezahl bis zur Wäsche pro Kategorie (z. B. Jeans 5, T-Shirt 1); Waschgang-Vorschlag nach Temperatur, Farbe, Programm; "Fertig gewaschen" mit einem Tipp. **[F]**
+- **K25** **Verkaufen:** Anzeigentext aus vorhandenen Daten zum Kopieren, Link zur Suche ähnlicher Angebote, Status verkauft/gespendet/aussortiert. Kein automatisches Einstellen. **[F/P]**
+
+### Tagebuch und Kaufcheck
+- **K26** **Spiegel-Selfie:** Gesicht auf dem Gerät verpixelt, Teile erkannt und zugeordnet, knappe Treffer werden immer nachgefragt, Bestätigung verbessert künftige Erkennung. **[F/P]**
+- **K27** **Kaufcheck:** gleiche Kamera, eine Frage pro Sitzung, Ergebnis in drei Zeilen plus Preis-pro-Tragen-Schätzung. **[F/P]**
+
+### Farbtyp (freiwillig)
+- **K28** Selfie bei Tageslicht, optional mit weißem Blatt Papier als Farbreferenz; alles **auf dem Gerät**. Haut automatisch, Haare und Augen per Antippen (Pipette mit Lupe), ein Bildschirm mit 4 Reglern in Alltagssprache; Unterton-Hilfe nur bei "Weiß ich nicht"; Ergebnis als Palette mit Hinweis "Stilberatung, keine Wissenschaft". **[F]**
+
+### Grundlagen
+- **K29** **Datenschutz-Übersicht in einfacher Sprache**, KI abschaltbar (dann Bildauswahl statt Erkennung). **[F]**
+- **K30** **Kein Konto nötig.** Cloud-Sicherung als ein Schalter; dabei wird im Hintergrund ein Konto angelegt (E-Mail-Link oder Mit Apple anmelden). Sicherung Ende-zu-Ende verschlüsselt. **[P]**
+- **K31** Export (alles als ZIP), Import auf neuem Gerät, **Konto in der App löschen**. **[F]**
+- **K32** **Widget** auf Home- und Sperrbildschirm: heutiges Outfit und Wetter. **[F]**
+- **K33** Barrierefreiheit: Systemschriftgrößen, Screenreader, große Tippflächen, Hell/Dunkel/Reizarm, Farben immer mit Namen. **[F]**
+- **K34** **Erweiterungen-Bildschirm:** Liste mit Bild, einem Satz Erklärung und Schalter; empfohlene Erweiterungen höchstens einmal pro Monat als Hinweiskarte (aus Nutzungsverhalten, z. B. viele Online-Käufe → Rückgabe-Erinnerung). **[F]**
+- **K35** **Einstieg in 3 Schritten:** Willkommen → erstes Teil fotografieren oder Galerie-Stapel → Abend-Benachrichtigung erlauben. Ort und Kalender werden erst gefragt, wenn sie gebraucht werden. **[F]**
+
+---
+
+## 5. Erweiterungen (zuschaltbar, Standard aus)
+
+Jede Erweiterung: ein Schalter, ein Satz Erklärung, ein Bild. Ausschalten blendet alles aus; die Daten bleiben erhalten, bis der Nutzer "Daten löschen" wählt. Keine Erweiterung darf die Einfachheits-Regeln im ausgeschalteten Zustand verletzen; eingeschaltet gelten sie ebenfalls (Abschnitt 2).
+
+| ID | Erweiterung | Was sie macht (ein Satz für den Nutzer) | Steckplätze | Plan |
+|---|---|---|---|---|
+| **E01** | Mehr Auswahl | "Zeigt dir 3 Vorschläge statt einem, mit Filtern und Anlass-Wahl." | Heute-Ansicht, Engine | F |
+| **E02** | Outfit-Baukasten | "Stell Outfits selbst zusammen und speichere sie." | eigener Bildschirm, Schrank | F |
+| **E03** | Uniform-Formel | "Leg deine Lieblingsformel fest, die App wechselt nur innerhalb davon." | Engine-Filter | F |
+| **E04** | Wohlfühl-Filter | "Schließt kratzige Stoffe, enge Schnitte oder störende Etiketten aus." | Engine-Filter, Teil-Ansicht | F |
+| **E05** | Rückgabe und Garantie | "Erinnert dich an Rücksendefristen und Garantien neuer Käufe." | Kamera/Teilen, Benachrichtigungen | F |
+| **E06** | Wunschliste mit Bedenkzeit | "Merk dir Wünsche und entscheide nach 48 Stunden noch einmal." | Kaufcheck, Hinweiskarten | F |
+| **E07** | Pflege-Plus | "Pflege-Erinnerungen, Saisonwechsel, Reparatur-Liste, Waschzähler." | Hinweiskarten, Teil-Ansicht | P |
+| **E08** | Statistik und Rückblick | "Wie viel deines Schranks du trägst, Monatsrückblick, Schrankwert." | eigener Bildschirm | P |
+| **E09** | Budget | "Kleidungsbudget pro Monat und freiwillige Regel 'eins rein, eins raus'." | Kaufcheck, Hinweiskarten | P |
+| **E10** | Was fehlt? | "Zeigt, welches Teil dir die meisten neuen Outfits bringen würde." | Hinweiskarten, eigener Bildschirm | P |
+| **E11** | Reise-Packliste | "Packt für Ziel, Dauer und Wetter mit möglichst wenigen Teilen." | eigener Bildschirm | P |
+| **E12** | Passform | "Vermisst dein Lieblingsteil per Foto und vergleicht mit Maßtabellen von Shops." | Kamera, Teil-Ansicht, Kaufcheck | P |
+| **E13** | Proportionen | "Schnitt-Vorlieben per Regler, ohne Foto und ohne Gewicht." | Engine-Bewertung | P |
+| **E14** | Anlässe und Personen | "Merkt sich, was du bei welchem Anlass und mit wem getragen hast." | Tagebuch, Hinweiskarten | P |
+| **E15** | Profile und Kinderkleiderschrank | "Weitere Schränke für Partner oder Kinder, mit Größenwechsel-Hinweis." | Profilwahl, Schrank | P |
+| **E16** | Geteilter Schrank | "Teile ausgewählte Teile mit Partner oder Geschwistern zum Leihen." (braucht Cloud) | Schrank, Teil-Ansicht | P |
+| **E17** | Familien-Abstimmung | "Stimmt Outfits mehrerer Profile farblich ab, z. B. für Familienfotos." (braucht E15) | Heute | P |
+| **E18** | Outfit-Umfrage | "Frag Freunde per Link, welches Outfit besser ist. Link läuft nach 48 Stunden ab." | Teilen | P |
+| **E19** | Aussortieren und Spenden | "Archiv für Verkauftes und Gespendetes, Erlös, Kleiderspende in der Nähe." | Schrank | F |
+| **E20** | Sprachbefehle | "Frag Siri oder Google: 'Was ziehe ich heute an?'" | Kurzbefehle | P |
+
+---
+
+## 6. Schwierigkeiten und Lösungen
+
+| Schwierigkeit | Lösung |
+|---|---|
+| Erfassen ist zu aufwendig | Ein Kamera-Knopf, automatische Fototyp-Erkennung und Gruppierung (K01–K02), Galerie-Stapel (K03), Teilen aus Shops (K10), Bestätigungskarten ohne Formular (K09), Vorschläge schon ab 3 Teilen (K20), Schrank wächst über Spiegel-Selfies (K26) |
+| Fototyp falsch erkannt (z. B. Etikett als Teil) | Bestätigungskarte zeigt den erkannten Typ klein mit "Ändern"; Korrekturen fließen in die lokalen Schwellenwerte |
+| Fotos falsch gruppiert | Foto auf der Karte per Ziehen einem anderen Teil zuordnen; Gruppierungsregel per Unit-Tests abgesichert |
+| Kaufcheck und neues Teil nutzen dieselbe Kamera | Eine Frage pro Kamera-Sitzung, Antwort gilt für die ganze Sitzung |
+| Spiegel-Selfie verwechselt ähnliche Teile | Nie still eintragen; knappe Treffer mit einem Tipp nachfragen; Bestätigungen werden Referenzbilder; **Machbarkeitstest in Phase 2**; Rückfall: "Anziehen"-Knopf deckt den Normalfall ohnehin ab |
+| Farbanalyse per Foto unzuverlässig | Messung nur als Startwert, Pipette und Regler, weißes Blatt als Farbreferenz, Ergebnis als Palette mit ehrlichem Hinweis, alles auf dem Gerät |
+| Pflegeetikett sagt nichts über Haltbarkeit | Keine Haltbarkeitsnote; Pflegeaufwand und echte Werte (getragen, gewaschen) |
+| Gesichter in Fotos | Verpixeln auf dem Gerät vor jedem Upload, Metadaten entfernen, auf dem Server nichts speichern |
+| Zu viele Funktionen für "sehr einfach" | Kern mit 35 Funktionen, Rest als Erweiterungen (Standard aus), Steckplatz-Architektur |
+| Erweiterungen machen die App wieder kompliziert | Jede Erweiterung muss die Einfachheits-Regeln erfüllen; höchstens 1 Hinweiskarte pro Tag gilt für Kern und Erweiterungen zusammen; empfohlene Erweiterung höchstens einmal pro Monat |
+| Vorschläge wirken generisch | Material-Wetter-Logik, Termine, Accessoires, Rotation, Teil tauschen (K13), Lernen über eine Frage pro Tag (K17), Herz (K18) |
+| Stabilität und Tempo (Kritik an Konkurrenz) | Offline zuerst, Bildverarbeitung im Hintergrund, Leistungsziele (Abschnitt 15), Absturz-Monitoring ohne Inhalte |
+| Shop-Produktfotos sind urheberrechtlich geschützt | Nur privat im eigenen Schrank, nie in Umfrage-Links oder Anzeigentexten |
+| Verkaufsplattformen ohne offene Schnittstelle | Nur Text zum Kopieren und Link zur Suche |
+| Wenig Zeit des Entwicklers | Launch nur mit dem Kern; Erweiterungen danach einzeln nach Nutzerwunsch |
+
+---
+
+## 7. Architektur
+
+### 7.1 Offline zuerst
+- Alles lokal (SQLite plus Fotodateien). Jede Tabelle: `id` (UUID im Gerät), `updated_at`, `deleted_at`.
+- Ohne Konto bleibt alles lokal. Server nur für KI-Anfragen (ohne Speicherung), verschlüsselte Sicherung, Umfrage-Links.
+
+### 7.2 Kamera-Pipeline (K01–K10, K26, K27)
+
+```
+Foto
+ → lokal: Metadaten entfernen, Vorschaubild, Gesichts-/Personenerkennung, Textmenge messen
+ → Vorentscheidung:
+     Person mit Gesicht erkannt            → Typ "Spiegel-Selfie" → Gesicht verpixeln
+     viel Text, kleines Objekt             → Typ "Etikett" (Größe oder Pflege entscheidet die KI)
+     sonst                                 → Typ "Kleidungsstück" → Freistellen, Farben lokal
+ → Gruppierung (Kamera-Sitzung): Etiketten hängen am zuletzt fotografierten Teil;
+   neues Kleidungsfoto = neues Teil; Galerie: Zeitstempel-Lücken > 60 s trennen Teile
+ → Warteschlange (läuft offline weiter, wenn wieder Netz):
+     Kleidungsstück → ai-vision: classify_garment (Typ bestätigen + Merkmale)
+     Größenschild   → lokale Texterkennung → ai-text: label_extract
+     Pflegeetikett  → ai-vision: care_symbols
+     Spiegel-Selfie → ai-vision: outfit_photo_garments → lokale Zuordnung
+ → nicht im Schrank? → einmal pro Sitzung fragen: neues Teil oder Kaufcheck
+ → Bestätigungskarten (nur Unsicheres sichtbar) → Speichern
+```
+
+### 7.3 Spiegel-Selfie-Zuordnung (K26)
+- Pro erkanntem Teil Kandidaten bewerten: Kategorie (Pflicht), Farbabstand ΔE, Muster, Merkmale, Häufigkeit, Wäschestand.
+- Ergebnis: sicher (vorausgewählt) | knapp (Auswahl aus 2–3 Bildern) | neu (als neues Teil vorschlagen).
+- Schwellenwerte in `src/features/diary/matching.config.ts`, festgelegt durch den Machbarkeitstest in Phase 2.
+- Optional später: Bild-Ähnlichkeit auf dem Gerät (kleines Embedding-Modell, ONNX Runtime), nur wenn der Test es nötig macht.
+
+### 7.4 Outfit-Engine (K11–K18), komplett lokal ohne KI
+1. **Filter:** Wetter und Tagesverlauf (Temperaturbereich pro Kategorie und Material), Regen (Materialien), Anlass/Formalität, Wäschestand; Erweiterungen hängen weitere Filter ein (E03, E04).
+2. **Bausteine:** Oberteil, Unterteil oder Kleid, Schicht, Schuhe, Accessoires.
+3. **Bewertung:** Farbharmonie, Farbtyp-Passung, einheitliche Formalität, Rotation, Herz, gelernte Gewichte (K17), Abwechslung zu den letzten 7 Tagen; Erweiterungen hängen Bewertungen ein (E13).
+4. **Teil tauschen (K13):** Neuberechnung mit allen anderen Teilen fest.
+5. **Begründung (K14) und Mitnehm-Hinweis (K15):** aus den stärksten Bewertungsgründen und dem Tagesverlauf.
+- Tabellen (Material-Wetter, Formalität, Farbharmonie, Tragezahl bis Wäsche) in `src/data/`, vollständig unit-getestet.
+
+### 7.5 Erweiterungs-System (Steckplätze)
+
+Jede Erweiterung liegt in `src/extensions/<id>/` mit einem Manifest:
+
+```ts
+export const manifest: ExtensionManifest = {
+  id: 'E05',
+  name: 'Rückgabe und Garantie',
+  description: 'Erinnert dich an Rücksendefristen und Garantien neuer Käufe.',
+  icon: 'return',
+  plan: 'free',                // 'free' | 'premium'
+  requires: [],                // z. B. ['E15'] oder ['cloud']
+  migrations: [...],           // eigene Tabellen mit Präfix ext_e05_
+  slots: {
+    todayCards: [...],         // Hinweiskarten (Kern entscheidet über die eine pro Tag)
+    itemDetailSections: [...], // Abschnitte in der Teil-Ansicht
+    cameraIntents: [...],      // zusätzliche Auswertungen nach Foto oder Teilen
+    engineFilters: [...],      // harte Regeln für Outfits
+    engineScorers: [...],      // Bewertungen für Outfits
+    notificationProviders: [...],
+    screens: [...],            // eigene Bildschirme, erreichbar über "Mehr"
+    settingsSections: [...],
+  },
+};
+```
+
+- **Register** `src/extensions/registry.ts` lädt nur eingeschaltete Erweiterungen; Zustand in Tabelle `extensions_state`.
+- Der Kern stellt die Steckplätze bereit und kennt keine einzelne Erweiterung.
+- Ausschalten: Steckplätze werden entfernt, Daten bleiben; "Daten löschen" entfernt die `ext_`-Tabellen.
+- **Hinweiskarten-Warteschlange** im Kern: alle Karten (Kern und Erweiterungen) mit Priorität; angezeigt wird höchstens eine pro Tag.
+- **Benachrichtigungs-Budget** im Kern: Standard 1 pro Tag; jede Erweiterung, die Benachrichtigungen sendet, erhöht das Budget nur nach Zustimmung beim Einschalten ("Darf diese Erweiterung dich erinnern?").
+- Jede Erweiterung hat eigene Tests und muss ein- und ausgeschaltet werden können, ohne dass Kern-Tests sich ändern.
+
+### 7.6 KI-Aufgaben (Edge Functions)
+
+| Aufgabe | Eingabe | Ausgabe (JSON) |
+|---|---|---|
+| `classify_garment` | Bild Kleidungsstück | Fototyp-Bestätigung, Kategorie, Unterkategorie, Muster, Schnitt, Details, Formalität 1–5, Jahreszeit, Sicherheit |
+| `label_extract` | Text aus lokaler Erkennung | Marke, Größen, Material in %, Land, Artikelnummer |
+| `care_symbols` | Bild Pflegeetikett | genormte Symbol-Codes, Sicherheit |
+| `outfit_photo_garments` | Spiegel-Selfie (Gesicht verpixelt) | Teile mit Kategorie, Farbe, Muster, Details, Bildbereich |
+| `import_product` | Link-Text, Screenshot oder Mailtext | Name, Marke, Größe, Preis, Datum, Shop |
+| `size_chart` (E12) | Screenshot Maßtabelle | Größen mit Maßen in cm |
+
+- Bild auf max. 1024 px, Metadaten entfernt, Gesichter verpixelt. Feste System-Anweisung pro Aufgabe auf Deutsch, Temperatur 0, **nur JSON**, Zod-Prüfung, ein Neuversuch, sonst manueller Rückfall.
+- **Keine Inhalte loggen, keine Bilder speichern**, nur Zähler und Fehlercodes.
+
+### 7.7 Cloud-Sicherung (K30)
+- Datenbank-Export und Fotos werden **auf dem Gerät verschlüsselt** (libsodium); Schlüssel aus einem Wiederherstellungs-Code, den der Nutzer einmal sicher aufbewahrt (als Bild speichern oder ausdrucken).
+- Einfach für den Nutzer: Schalter an → E-Mail-Link oder Mit Apple anmelden → Wiederherstellungs-Code sichern → fertig; danach läuft die Sicherung automatisch bei WLAN.
+- Wiederherstellen: neues Handy → "Ich habe eine Sicherung" → anmelden → Code eingeben.
+
+### 7.8 Ordnerstruktur
+
+```
+app/                    Expo-Router-Bildschirme (heute, schrank, kamera, mehr)
+modules/native-vision/  eigenes Expo-Modul (Swift, Kotlin)
+src/
+  shared/               design-system/ reminders/ ai-client/
+  core/
+    camera/ grouping/ labels/ today/ engine/ wardrobe/ laundry/
+    diary/ shopcheck/ selling/ color/ backup/ settings/ onboarding/ paywall/
+    hints/              Hinweiskarten-Warteschlange
+    notifications/      Budget und Planer
+  extensions/
+    registry.ts types.ts
+    e01-mehr-auswahl/ ... e20-sprachbefehle/
+  services/             ai/ weather/ calendar/ vision/ storage/ purchases/ crypto/
+  data/                 materials.json formality.json colorNames.json careSymbols.json washDefaults.json
+  db/                   schema.ts migrations/ repositories/
+  i18n/                 de.json
+supabase/
+  migrations/  functions/ (ai-vision, ai-text, backup, share-poll, revenuecat-webhook, delete-account)
+tests/
+  fixtures/  eval/      (KI-Testsatz; Fotos nicht im Repository)
+docs/
+  FORTSCHRITT.md ENTSCHEIDUNGEN.md TESTLISTE.md NUTZERTESTS.md DATENSCHUTZ.md FEEDBACK.md
+```
+
+---
+
+## 8. Datenmodell
+
+**Kern (lokal; Cloud nur als verschlüsselte Sicherung)**
+- `items` (id, name, category, subcategory, pattern, cut, details_json, formality, seasons[], merkmal, status: `active|sold|donated|discarded`, purchase_price_cents?, purchase_date?, shop?, favorite, created_at, updated_at, deleted_at)
+- `item_photos` (id, item_id, kind: `front|back|worn|label|care|other`, uri, thumb_uri, mask_uri?)
+- `item_colors` (item_id, rank, hex, lab_l, lab_a, lab_b, name_de)
+- `item_labels` (item_id, brand?, size_system?, size_value?, size_secondary?, composition_json, origin?, article_no?)
+- `item_care` (item_id, symbols[], care_effort: `low|mid|high`)
+- `brand_size_profile` (brand, category, size_value, sample_count)
+- `outfits` (id, favorite, source: `engine|diary|ext`)
+- `outfit_items` (outfit_id, item_id, slot)
+- `wear_logs` (id, date, outfit_id?, event_title?, weather_json, feedback_json?, source: `wear_button|selfie|evening`)
+- `wear_log_items` (wear_log_id, item_id)
+- `laundry_state` (item_id, state: `clean|laundry`, wears_since_wash, washes_total)
+- `planned_outfit` (date, outfit_id) – Vorabend-Festlegung
+- `color_profile` (skin_l, undertone, hair_hex, eye_hex, contrast, palette_json, calibrated)
+- `engine_weights` (key, value)
+- `hints` (id, source, priority, payload_json, shown_at?, dismissed_at?)
+- `shopcheck_history` (id, photo_uri, attributes_json, price_cents?, result_json, decision?)
+- `extensions_state` (extension_id, enabled, enabled_at, notifications_allowed)
+- `settings` (key, value), `ai_usage` (month, count)
+
+**Erweiterungen:** eigene Tabellen mit Präfix `ext_<id>_`, angelegt über die Migrationen im Manifest.
+
+**Server (Supabase):** `accounts`, `ai_usage`, `backups` (Metadaten verschlüsselter Dateien), `shared_wardrobes` (E16), `polls` (E18, ablaufend). Row Level Security für alles, mit SQL-Tests.
+
+---
+
+## 9. Technik-Stack
+
+| Bereich | Wahl |
+|---|---|
+| App | Expo (React Native, TypeScript), Expo Router |
+| Builds und Updates | EAS Build, EAS Submit, EAS Update (ohne Mac) |
+| Mindestversion | iOS 17, Android 10 (vor Start prüfen; iOS 17 für Freistellen über Apple Vision) |
+| Lokale Daten | expo-sqlite mit Drizzle ORM; Fotos als WebP (max. 1600 px, Vorschau 400 px) |
+| Zustand | Zustand (UI), TanStack Query (Server) |
+| Bildverarbeitung | eigenes Expo-Modul `native-vision`: iOS Apple Vision (Freistellen, Text, Gesichter, Rechtecke), Android Google ML Kit (Subject Segmentation, Text, Gesichter); vorher prüfen, ob gepflegte Bibliotheken reichen (z. B. `react-native-subject-lift`, MIT) |
+| Kamera | react-native-vision-camera |
+| Farben | eigener Code (k-Means, Lab, ΔE, deutsche Farbnamen) |
+| Kalender | expo-calendar (nur lesen) |
+| Wetter | Bright Sky (Daten Deutscher Wetterdienst, CC BY 4.0, Namensnennung); Rückfall Open-Meteo **kommerzieller** Plan |
+| Benachrichtigungen | expo-notifications mit eigenem Planer (iOS: max. 64 geplante) und Budget |
+| Widget | iOS-Widget-Target per Config-Plugin, Android-Widget-Bibliothek |
+| Backend | Supabase Frankfurt (eu-central-1): Auth, Storage, Edge Functions |
+| KI | Mistral Small 3.2 (Bild und Text) über Edge Function, austauschbar |
+| Verschlüsselung | libsodium |
+| Bezahlung | RevenueCat |
+| Monitoring | Sentry EU-Region, ohne Fotos und Texte |
+| Tests | Jest, React Native Testing Library, KI-Testsatz, Nutzertests |
+
+---
+
+## 10. KI: Kosten und Regeln
+
+- Mistral Small 3.2: laut Preisübersichten **0,10 $ pro Million Eingabe-Tokens, 0,30 $ pro Million Ausgabe-Tokens**, Bilder zusätzlich in Tokens. Grobe Schätzung **unter 0,001 $ pro Bild-Aufgabe**; in Phase 2 mit echten Aufrufen messen und in `docs/ENTSCHEIDUNGEN.md` festhalten.
+- Auftragsverarbeitungsvertrag mit Mistral, Verarbeitung in der EU, keine Nutzung zum Training (Vertrag prüfen).
+- Anbieter hinter Schnittstelle, zweiter Anbieter als Rückfall konfigurierbar.
+- **Kennzeichnung:** Erkennungen auf Bestätigungskarten als "erkannt" markiert (kleines Symbol); Datenschutz-Übersicht erklärt, wo KI arbeitet (EU-KI-Verordnung, Transparenzpflichten seit 2. August 2026). Begründungen (K14) stammen aus Textbausteinen.
+
+---
+
+## 11. Datenschutz und Recht (Checkliste)
+
+**Vor dem Start**
+- [ ] Nebentätigkeit beim Arbeitgeber anzeigen oder genehmigen lassen
+- [ ] App-Name: Markenrecherche (DPMA, EUIPO), Domain, Store-Namen
+- [ ] Konten: Apple-Entwickler, Google Play, Expo, Supabase, Mistral, RevenueCat, Sentry
+
+**Vor dem ersten externen Tester**
+- [ ] Gewerbe anmelden
+- [ ] Impressum in App und Store
+- [ ] Datenschutzerklärung (Anbieter, Zwecke, Speicherorte, Dauer, Rechte; Verpixelung und lokale Farbanalyse beschreiben)
+- [ ] Auftragsverarbeitungsverträge: Supabase, Mistral, Sentry, RevenueCat
+- [ ] Verzeichnis der Verarbeitungstätigkeiten, technische und organisatorische Maßnahmen
+- [ ] Prüfen, ob eine Datenschutz-Folgenabschätzung nötig ist (Personenfotos; Gegenmaßnahmen: lokal verpixeln, nicht speichern)
+- [ ] Hinweis: Kinder nicht mitfotografieren; erkannte Gesichter werden immer verpixelt
+- [ ] Namensnennung Wetterdaten ("Deutscher Wetterdienst")
+- [ ] Mindestalter für Konten 16 Jahre
+
+**Vor dem Store-Launch**
+- [ ] Konto-Löschung in der App (Apple-Regel 5.1.1(v)); App ohne Konto nutzbar
+- [ ] Datenschutz-Angaben App Store und Google Play vollständig
+- [ ] Abo-Bedingungen klar vor dem Kauf, Wiederherstellen-Knopf
+- [ ] KI-Kennzeichnung
+- [ ] Shop-Produktfotos nur privat
+- [ ] Keine Körper- oder Gesundheitsversprechen in Store-Texten
+- [ ] Rechtstexte einmal von einer Fachperson prüfen lassen
+
+---
+
+## 12. Was die App bewusst NICHT macht
+
+- Keine Haltbarkeits- oder Qualitätsnoten.
+- Keine Aussagen über Körperform, Gewicht oder "Problemzonen"; keine Körperfotos.
+- Keine öffentliche Community, kein Feed, keine Werbung, kein Datenverkauf.
+- Kein automatisches Einstellen auf Verkaufsplattformen.
+- Keine KI-generierte virtuelle Anprobe.
+- Keine Affiliate-Links im ersten Jahr.
+
+---
+
+## 13. Geldmodell (vorläufig, noch offen)
+
+Das Geldmodell ist noch nicht entschieden. **Vorläufig Freemium mit Abo.** Grenzen und Premium-Kennzeichnung nur in `src/core/paywall/limits.ts` und in den Erweiterungs-Manifesten.
+
+**Gratis:** unbegrenzt Teile, Heute-Outfit, Anziehen, Vorabend-Outfit, Wäsche, Farbtyp, Größenprofil, Widget, alle Gratis-Erweiterungen, **30 KI-Erkennungen pro Monat** (Wert nach Beta anpassen), Export, Konto löschen.
+
+**Premium:** unbegrenzte KI-Erkennungen (Etiketten, Spiegel-Selfie, Kaufcheck, Galerie-Stapel, Teilen-Import), Cloud-Sicherung, alle Premium-Erweiterungen.
+
+**Preisvorschlag (testen):** 3,99 € / Monat oder 29,99 € / Jahr, 14 Tage Probezeit.
+
+**Konkurrenz zur Orientierung:** Acloset gratis bis 100 Teile, Abos ab 3,99 € / Monat; Whering kostenlos; GetWardrobe gratis bis 100 Teile, ab 9,99 $ / Monat; Stylebook einmalig 4,99 $.
+
+**Laufende Kosten:** Supabase Free für Entwicklung (pausiert nach 1 Woche Inaktivität), danach Pro 25 $ / Monat. Fotos als WebP ca. 150–300 KB.
+
+---
+
+## 14. Design-System
+
+- Kleidung steht im Mittelpunkt: heller, neutraler Hintergrund, große Bilder, wenig Text.
+- Eine Akzentfarbe nur für die Hauptaktion.
+- Systemschrift, Fließtext mindestens 16 pt, Tippflächen mindestens 48 × 48 pt.
+- Komponenten zuerst: Hauptknopf, Outfit-Bild (Collage aus freigestellten Teilen, Teile einzeln antippbar), Bestätigungskarte, Bildauswahl (statt Listen), Hinweiskarte, Regler mit Live-Vorschau, Pipette mit Lupe, Waschsymbol-Raster, Kaufcheck-Ergebnis (drei Zeilen), Rückgängig-Leiste, leerer Zustand mit Kamera-Knopf, Erweiterungs-Kachel mit Schalter.
+- Texte: Du-Form, kurz, freundlich, nie über Körper urteilen, nie vorwurfsvoll.
+- Bewegung dezent; aus im reizarmen Modus und bei "Bewegung reduzieren".
+
+---
+
+## 15. Qualität
+
+- **Unit-Tests:** Fototyp-Vorentscheidung, Gruppierung, Farben, Farbharmonie und Palette, Engine (Filter, Bewertung, Teil tauschen, Begründung, Mitnehm-Hinweis), Material-Wetter, Waschgruppen, Größen und Größenprofil, Preis pro Tragen, Selfie-Zuordnung, Hinweiskarten-Warteschlange, Benachrichtigungs-Budget, Erweiterungs-Register (ein/aus ohne Kern-Änderung), Limits, Verschlüsselung.
+- **KI-Testsatz** (`tests/eval/`): 30 Größenschilder, 20 Pflegeetiketten, 50 Spiegel-Selfies, 40 Kleidungsfotos für Fototyp und Kategorie; Fotos privat, nicht im Repository; Skript misst Trefferquoten.
+- **Nutzertests** nach Regel 14 (Abschnitt 2) in jeder Phase mit Oberfläche.
+- **Leistung:** Heute-Bildschirm mit Outfit unter 1 s; Freistellen unter 2 s pro Foto auf einem 3 Jahre alten Handy; Schrank mit 500 Teilen scrollt flüssig.
+- **SQL-Tests** für alle RLS-Regeln.
+- **Barrierefreiheit:** vor jedem Release mit VoiceOver/TalkBack und größter Schrift.
+
+---
+
+## 16. Arbeitsweise ohne Mac (nur Smartphone)
+
+1. Code auf GitHub; Claude Code arbeitet in Branches und Pull Requests.
+2. EAS Build in der Cloud; Entwicklungs-Build pro nativer Änderung (Modul `native-vision`, Widget, Berechtigungen), installiert auf dem iPhone oder über TestFlight.
+3. Reine JavaScript-Änderungen per EAS Update auf den Vorschau-Kanal.
+4. Supabase über Web-Dashboard und Migrationen im Repository.
+5. Pro Sitzung ein klar umrissenes Ziel aus der aktuellen Phase.
+
+---
+
+## 17. Phasenplan mit Abnahmekriterien
+
+Grobe Schätzung bei etwa 4 Stunden pro Woche mit Claude Code: **Beta nach Phase 7 (ca. 3 bis 5 Monate), Launch nach Phase 10 (ca. 5 bis 8 Monate).** Erweiterungen danach, einzeln nach Nutzerwunsch.
+
+### Teil A – Kern bis zum Launch
+
+#### Phase 0 – Grundlagen
+- Repository, Expo-Projekt (TypeScript, Expo Router), ESLint, Prettier, Jest
+- `CLAUDE.md` (Anhang A), `docs/`-Dateien
+- EAS eingerichtet, erster Entwicklungs-Build auf dem iPhone
+- Supabase-Projekt in Frankfurt, Edge Function "hallo"
+- **Abnahme:** App startet über EAS auf dem iPhone; Tests grün; Edge Function antwortet.
+
+#### Phase 1 – Klick-Prototyp und Fundament
+- Design-System (Abschnitt 14), Navigation mit drei Bereichen (Abschnitt 3.1), i18n, lokale Datenbank, Foto-Speicher
+- **Klick-Prototyp mit Beispieldaten** für alle Abläufe aus Abschnitt 3.2 (ohne echte Logik)
+- Erweiterungs-Register mit Steckplätzen (Abschnitt 7.5) und einer Test-Erweiterung, Hinweiskarten-Warteschlange, Benachrichtigungs-Budget
+- **Abnahme:** Nutzertest mit 5 Personen: jeder Ablauf aus 3.2 wird ohne Erklärung in der Soll-Tippzahl geschafft (sonst Prototyp vereinfachen); Test-Erweiterung lässt sich ein- und ausschalten, ohne dass Kern-Tests sich ändern; VoiceOver liest alle Knöpfe.
+
+#### Phase 2 – Bildverarbeitung und Machbarkeitstests
+- Expo-Modul `native-vision` (Freistellen, Texterkennung, Gesichter, Rechtecke) auf beiden Plattformen
+- Edge Functions `ai-vision` und `ai-text` mit Mistral, Zod-Schemas, Kontingent
+- **Machbarkeitstests per Skript, ohne Oberfläche:** Fototyp-Erkennung (40 Fotos), Gruppierung (10 Serien), Größenschilder (30), Pflegeetiketten (20), Spiegel-Selfies (50 Fotos gegen ca. 40 Teile)
+- Kosten pro Aufgabe mit echten Aufrufen messen
+- **Abnahme:** Fototyp ≥ 95 % richtig; Gruppierung ≥ 95 % richtig; Größenschild ≥ 90 %; Pflegesymbole ≥ 80 %; Spiegel-Selfie: richtiges Teil unter den Top 3 in ≥ 80 %. **Wird ein Wert nicht erreicht:** anhalten, Ergebnisse vorlegen, Entscheidung einholen.
+
+#### Phase 3 – Kamera und Erfassung
+- K01–K10, K29 (Datenschutz-Übersicht, KI abschaltbar)
+- **Abnahme:** 10 Teile mit Etiketten in unter 8 Minuten erfasst; jedes Teil in höchstens 3 Tipps bestätigt; keine Formularansicht im Normalablauf; App funktioniert mit abgeschalteter KI (Bildauswahl); Offline-Aufträge laufen bei Netz nach; Nutzertest bestanden.
+
+#### Phase 4 – Heute und Outfit-Engine
+- K11–K20, K24 (Wäsche automatisch)
+- **Abnahme:** Bei 5 °C und Regen weder Sandalen noch Wildleder; Termin "Vorstellungsgespräch" ergibt formelles Outfit; Teile in der Wäsche erscheinen nicht; Teil tauschen ändert nur dieses Teil; Vorabend-Outfit erscheint morgens unverändert; höchstens 1 Benachrichtigung und 1 Hinweiskarte pro Tag; Vorschlag auch offline; Nutzertest bestanden.
+
+#### Phase 5 – Schrank
+- K21–K23, K25
+- **Abnahme:** Suche "blaue Jeans" findet passende Teile; jeder Wert in der Teil-Ansicht in einem Tipp änderbar; Größenprofil pro Marke korrekt nach 3 Teilen derselben Marke; Anzeigentext enthält Marke, Größe, Material, Zustand und wird kopiert; Nutzertest bestanden.
+
+#### Phase 6 – Spiegel-Selfie und Kaufcheck
+- K26, K27
+- **Abnahme:** Spiegel-Selfie in höchstens 2 Tipps eingetragen; knappe Treffer werden immer nachgefragt; kein unverpixeltes Gesicht erreicht den Server (Netzwerk-Mitschnitt); Kaufcheck-Ergebnis in unter 10 s; Nutzertest bestanden.
+
+#### Phase 7 – Farbtyp
+- K28
+- **Abnahme:** Farbtyp in unter 2 Minuten; kein Selfie verlässt das Gerät (Netzwerk-Mitschnitt); Palette beeinflusst Vorschläge und Kaufcheck; Nutzertest bestanden.
+- ➜ **Meilenstein: geschlossene Beta** (TestFlight und Google Play intern), 20 bis 40 Tester. Rückmeldungen in `docs/FEEDBACK.md`; dort auch abfragen, welche Erweiterungen gewünscht werden (Reihenfolge für Teil B).
+
+#### Phase 8 – Sicherung, Export, Konto
+- K30, K31
+- **Abnahme:** Cloud-Sicherung in höchstens 4 Schritten eingerichtet; Wiederherstellung von iPhone auf Android vollständig; Server-Dateien ohne Schlüssel nicht lesbar; Konto-Löschung entfernt alle Cloud-Daten; RLS-Tests grün.
+
+#### Phase 9 – Bezahlung und Erweiterungen-Bildschirm
+- RevenueCat, Paywall, Probezeit, Wiederherstellen, `limits.ts`, Webhook
+- K34 (Erweiterungen-Bildschirm mit Premium-Kennzeichnung, Empfehlungslogik)
+- **Abnahme:** Kauf, Kündigung, Wiederherstellung im Sandbox-Modus auf beiden Plattformen; Grenzen exakt wie Abschnitt 13; Paywall erscheint nur bei Premium-Aktionen, nie beim Öffnen der App.
+
+#### Phase 10 – Widget, Einstieg, Launch
+- K32, K33 (Barrierefreiheits-Durchgang), K35
+- Leistungsziele (Abschnitt 15), leere und Fehlerzustände
+- Rechtstexte, Store-Einträge, Screenshots, Datenschutz-Angaben (Abschnitt 11)
+- **Abnahme:** Neue Testperson bekommt ihr erstes Outfit in unter 5 Minuten ab Installation; Widget zeigt heutiges Outfit; Checkliste Abschnitt 11 komplett; Store-Freigabe auf beiden Plattformen.
+
+### Teil B – Erweiterungen nach dem Launch
+
+Reihenfolge innerhalb der Pakete nach Beta-Feedback. **Gemeinsame Abnahme für jede Erweiterung:** ein- und ausschaltbar ohne Änderung am Kern; eigene Tests grün; Einfachheits-Regeln erfüllt; ausgeschaltet keinerlei sichtbare Spuren; Nutzertest mit 3 Personen.
+
+#### Phase 11 – Paket "Alltag" (lokal, meist gratis)
+- E01 Mehr Auswahl, E02 Outfit-Baukasten, E03 Uniform-Formel, E04 Wohlfühl-Filter, E05 Rückgabe und Garantie, E06 Wunschliste, E19 Aussortieren und Spenden
+- **Zusätzliche Abnahme:** E03 und E04 schränken Vorschläge korrekt ein (Unit-Tests); E05 erzeugt aus geteilter Bestellmail eine Frist mit Erinnerung.
+
+#### Phase 12 – Paket "Überblick"
+- E07 Pflege-Plus, E08 Statistik und Rückblick, E09 Budget, E10 Was fehlt?, E14 Anlässe und Personen
+- **Zusätzliche Abnahme:** "Was fehlt?" nennt eine nachvollziehbare Zahl neuer Outfits; Statistik stimmt mit Tagebuch überein.
+
+#### Phase 13 – Paket "Passform und Reisen"
+- E11 Reise-Packliste, E12 Passform (inkl. Edge-Function-Aufgabe `size_chart`), E13 Proportionen
+- **Zusätzliche Abnahme:** Vermessen per Foto mit A4-Blatt weicht höchstens 2 cm vom Maßband ab (5 Testteile); Maßtabellen-Screenshot korrekt eingelesen; Proportionen ohne Foto und ohne Gewicht.
+
+#### Phase 14 – Paket "Familie und Teilen"
+- E15 Profile und Kinderkleiderschrank, E16 Geteilter Schrank, E17 Familien-Abstimmung, E18 Outfit-Umfrage, E20 Sprachbefehle
+- **Zusätzliche Abnahme:** geteilter Schrank zwischen iPhone und Android funktioniert; Umfrage-Link läuft nach 48 Stunden ab und Bilder sind gelöscht; keine Shop-Fotos in Umfragen; Kinder-Profile ohne Geburtsdatum.
+
+---
+
+## 18. Risiken und Gegenmaßnahmen
+
+| Risiko | Gegenmaßnahme |
+|---|---|
+| Automatische Fototyp-Erkennung oder Gruppierung zu ungenau | Machbarkeitstest Phase 2, "Ändern" auf der Karte, Foto per Ziehen umhängen |
+| Spiegel-Selfie zu ungenau | Nachfragen statt Raten, Referenzbilder, "Anziehen"-Knopf deckt den Normalfall |
+| App wird mit Erweiterungen unübersichtlich | Steckplätze, gemeinsame Hinweiskarten- und Benachrichtigungsgrenzen, Standard aus |
+| Nutzer verstehen Abläufe nicht | Klick-Prototyp und Nutzertest in Phase 1, danach in jeder Phase |
+| Freistellen schlecht bei hellen Teilen auf hellem Grund | Tipp "dunkler Untergrund", Pinsel-Korrektur |
+| Wetter- oder Kalenderdienst nicht erreichbar | Vorschlag ohne diese Daten, freundlicher Hinweis statt Fehler |
+| KI-Anbieter ändert Preise | Schnittstelle, zweiter Anbieter, Kontingente |
+| Datenschutzverstoß durch Personenfotos | Verpixeln auf dem Gerät, keine Speicherung, Prüfung per Netzwerk-Mitschnitt |
+| Wenig Zeit des Entwicklers | Launch nur mit Kern, Erweiterungen einzeln danach, keine zweite App parallel |
+
+---
+
+## 19. Offene Entscheidungen
+
+- [ ] **Geldmodell** (vorläufig Freemium, Abschnitt 13)
+- [ ] App-Name nach Markenrecherche
+- [ ] Gratis-Kontingent KI und Preise nach Beta
+- [ ] Reihenfolge der Erweiterungs-Pakete nach Beta-Feedback
+- [x] Ob Android ab Phase 0 gleichwertig getestet wird → **Ja, gleichwertig** (siehe `docs/ENTSCHEIDUNGEN.md`)
+
+---
+
+## Anhang A – Vorlage für `CLAUDE.md`
+
+Siehe `CLAUDE.md` im Repository (aus dieser Vorlage erzeugt).
+
+## Anhang B – Start-Anweisung für die erste Claude-Code-Sitzung
+
+```
+Lies KLEIDERSCHRANK_PLAN.md vollständig. Lege dann CLAUDE.md nach Anhang A an und
+erstelle docs/FORTSCHRITT.md, docs/ENTSCHEIDUNGEN.md, docs/TESTLISTE.md,
+docs/NUTZERTESTS.md, docs/DATENSCHUTZ.md und docs/FEEDBACK.md als Gerüst.
+Schlage mir danach einen Plan für Phase 0 in Stichpunkten vor und warte auf meine
+Freigabe, bevor du Code schreibst. Ich arbeite nur vom Smartphone ohne Mac;
+berücksichtige das bei allen Schritten.
+```
