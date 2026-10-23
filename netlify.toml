@@ -20,3 +20,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
     Permissions-Policy = "camera=(self), geolocation=(self), microphone=()"
+    # SQLite im Browser braucht SharedArrayBuffer (cross-origin isolation).
+    # Alle Dateien und Modelle kommen von dieser Adresse; Supabase-Aufrufe laufen über CORS.
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
