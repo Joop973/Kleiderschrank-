@@ -69,9 +69,22 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 ## 2026-10-23 – Veröffentlichung über main
 - Claude arbeitet auf Branches und öffnet Pull Requests; Netlify baut Vorschau-Adressen. Merge nach main durch den Entwickler ändert die Home-Bildschirm-App.
 
+## 2026-10-23 – Phase 1: technische Festlegungen
+- Datenbank: expo-sqlite mit asynchronen Abfragen, eigene Migrationen (PRAGMA user_version), ohne Drizzle. Grund: Drizzle nutzt nur synchrone Abfragen; im Browser blockiert expo-sqlite dabei mit einer Warteschleife.
+- SQLite im Browser braucht Cross-Origin-Isolation: Header `Cross-Origin-Opener-Policy: same-origin` und `Cross-Origin-Embedder-Policy: require-corp` (netlify.toml, metro.config.js). `require-corp` statt `credentialless`, weil Safari `credentialless` nicht unterstützt. Folge: alle Dateien und Modelle müssen von der eigenen Adresse kommen.
+- Fotos im Browser in IndexedDB (src/services/storage/fotoSpeicher.web.ts).
+- Steckplätze im Kern unter src/core/steckplaetze; Register in src/extensions; Verbindung nur über src/zusammenbau.ts.
+- Gesetzte Werte: Akzentfarbe Tannengrün (#1F5E45 hell, #6CC39C dunkel), Arbeitstitel "Schrank", Beispielbilder als gezeichnete Symbole.
+
+## 2026-10-23 – Klick-Prototyp: zwei Abweichungen vom Ablauf in Plan 3.2 (offen, Nutzertest)
+- **Kaufcheck-Frage:** Plan sagt "fragt einmal pro Kamera-Sitzung: neu oder nur prüfen?". Mit dieser Frage bräuchte "Neues Teil" 4 Tipps statt höchstens 3. Prototyp: keine eigene Frage, sondern zwei Knöpfe auf der Bestätigungskarte ("Ja, in den Schrank" / "Nur prüfen").
+- **Spiegel-Selfie, knapper Treffer:** Plan sagt "knappe Treffer werden immer nachgefragt". Prototyp: bester Treffer ist vorausgewählt, hervorgehoben und die Alternative sichtbar; "Ja" ohne zusätzlichen Tipp möglich. Sonst 4 statt 3 Tipps.
+- Entscheidung durch den Entwickler nach dem Nutzertest.
+
 ## Offen
 - Geldmodell (vorläufig Freemium)
 - App-Name nach Markenrecherche
 - Gratis-Kontingent KI und Preise nach Beta
 - Reihenfolge der Erweiterungs-Pakete nach Beta-Feedback
 - KI-Kosten pro Aufgabe (Messung in Phase 2)
+- Kaufcheck-Frage und Selfie-Nachfrage (siehe Phase-1-Abweichungen)

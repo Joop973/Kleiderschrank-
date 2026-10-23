@@ -40,7 +40,9 @@ Danach: **Actions** → **Server (Supabase)** → **Run workflow**. Der Lauf mus
 1. Den Pull Request von Claude in der GitHub-App mergen (sonst ist `main` noch leer).
 2. Die Netlify-Adresse in **Safari** öffnen.
 3. Teilen-Symbol → **Zum Home-Bildschirm** → **Hinzufügen**.
-4. App vom Home-Bildschirm starten. Auf "Heute" sollte stehen: **Server antwortet.**
+4. App vom Home-Bildschirm starten, oben rechts auf **Mehr** (drei Punkte) tippen. Ganz unten sollte stehen: **Server: Server antwortet.**
+
+Hinweis: Die App speichert Daten im Browser mit SQLite. Das braucht iOS 17 oder neuer. Zeigt die App "Deine Daten konnten nicht geöffnet werden", bitte iOS-Version mitteilen.
 
 ## Wenn etwas nicht klappt
 - "Server noch nicht eingerichtet": Netlify-Variablen aus 3.4 fehlen oder wurden nach dem Build eingetragen. In Netlify **Deploys** → **Trigger deploy** → **Clear cache and deploy**.

@@ -114,6 +114,7 @@ Diese Datei (`KLEIDERSCHRANK_PLAN.md`) ist die verbindliche Grundlage für das g
 **Kaufcheck im Laden (2 Tipps)**
 1. Kamera-Knopf → Teil fotografieren.
 2. App erkennt "nicht im Schrank" und fragt einmal pro Kamera-Sitzung: "Neu für deinen Schrank oder nur prüfen?" → "Nur prüfen".
+   *Prototyp-Variante (offen, Nutzertest Phase 1):* keine eigene Frage; die Bestätigungskarte hat "Ja, in den Schrank" und "Nur prüfen". So bleibt "Neues Teil" bei 3 Tipps.
 3. Ergebnis in drei Zeilen: "Passt zu 9 Outfits", "Ähnlich: deine graue Strickjacke", "Farbe steht dir". Dazu geschätzter Preis pro Tragen.
 
 **Etwas anderes getragen (2 Tipps)**
@@ -314,7 +315,8 @@ export const manifest: ExtensionManifest = {
 };
 ```
 
-- **Register** `src/extensions/registry.ts` lädt nur eingeschaltete Erweiterungen; Zustand in Tabelle `extensions_state`.
+- **Register** `src/extensions/registry.ts` listet alle Manifeste; welche aktiv sind, steht in Tabelle `extensions_state`. Steckplatz-Typen und -Logik liegen im Kern unter `src/core/steckplaetze/`.
+- **Kompositionswurzel** `src/zusammenbau.ts`: einziger Ort, an dem die App das Register importiert. Kern, Bildschirme und Dienste importieren nie aus `src/extensions/` (ESLint-Regel).
 - Der Kern stellt die Steckplätze bereit und kennt keine einzelne Erweiterung.
 - Ausschalten: Steckplätze werden entfernt, Daten bleiben; "Daten löschen" entfernt die `ext_`-Tabellen.
 - **Hinweiskarten-Warteschlange** im Kern: alle Karten (Kern und Erweiterungen) mit Priorität; angezeigt wird höchstens eine pro Tag.
@@ -445,7 +447,7 @@ Der Prototyp läuft als **Webapp im Browser** (Expo Web, als Home-Bildschirm-App
 | App | Expo (React Native, TypeScript), Expo Router |
 | Builds und Updates | EAS Build, EAS Submit, EAS Update (ohne Mac) |
 | Mindestversion | iOS 17, Android 10 (vor Start prüfen; iOS 17 für Freistellen über Apple Vision) |
-| Lokale Daten | expo-sqlite mit Drizzle ORM; Fotos als WebP (max. 1600 px, Vorschau 400 px) |
+| Lokale Daten | expo-sqlite mit asynchronen Abfragen und eigenen Migrationen (ohne Drizzle: blockiert im Browser, siehe `docs/ENTSCHEIDUNGEN.md`); Fotos als WebP (max. 1600 px, Vorschau 400 px) |
 | Zustand | Zustand (UI), TanStack Query (Server) |
 | Bildverarbeitung | Prototyp: siehe Abschnitt 7.10 (U²-Net und Gesichtserkennung im Browser, Canvas). Teil B: eigenes Expo-Modul `native-vision`: iOS Apple Vision (Freistellen, Text, Gesichter, Rechtecke), Android Google ML Kit (Subject Segmentation, Text, Gesichter); vorher prüfen, ob gepflegte Bibliotheken reichen (z. B. `react-native-subject-lift`, MIT) |
 | Kamera | Prototyp: Kamera im Browser; Teil B expo-camera oder react-native-vision-camera |
@@ -708,6 +710,7 @@ Reihenfolge innerhalb der Pakete nach Beta-Feedback. **Gemeinsame Abnahme für j
 - [ ] App-Name nach Markenrecherche
 - [ ] Gratis-Kontingent KI und Preise nach Beta
 - [ ] Reihenfolge der Erweiterungs-Pakete nach Beta-Feedback
+- [ ] Kaufcheck-Frage: eigene Frage pro Kamera-Sitzung oder zwei Knöpfe auf der Bestätigungskarte (Prototyp; Nutzertest Phase 1)
 - [x] Ob Android ab Phase 0 gleichwertig getestet wird → **Nein:** Prototyp als Webapp, getestet auf dem iPhone; Android gleichwertig ab Teil B (siehe `docs/ENTSCHEIDUNGEN.md`)
 - [ ] **Store ja/nein** nach dem Prototyp (Meilenstein nach Phase 6)
 

@@ -9,7 +9,7 @@ Aktuell Teil A (Prototyp): Webapp (Expo Web) auf Netlify, als Home-Bildschirm-Ap
 
 ## Stack
 
-Expo (React Native, TypeScript), Expo Router, expo-sqlite + Drizzle, Zustand, TanStack Query,
+Expo (React Native, TypeScript), Expo Router, expo-sqlite (async, eigene Migrationen, ohne Drizzle), Zustand, TanStack Query,
 Prototyp: Browser-APIs hinter src/services/, U²-Net und Gesichtserkennung im Browser, Web-Push (Plan 7.10).
 Erst Teil B: eigenes Expo-Modul modules/native-vision (Apple Vision / ML Kit). Supabase (Frankfurt),
 Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
@@ -20,6 +20,7 @@ Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 - Lint: npm run lint
 - Formatierung: npm run format (Prüfung: npm run format:check)
 - Typprüfung: npm run typecheck
+- Abläufe im Browser: npm run build:web && npm run test:browser (Playwright, zählt Tipps)
 - KI-Testsatz: npm run eval
 - Supabase-Migration: supabase migration new <name>
 - Web-Build: npm run build:web (Netlify baut automatisch; Branches bekommen Vorschau-Adressen)
@@ -34,7 +35,8 @@ Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 - Commit-Nachrichten auf Deutsch, kleine Commits.
 - Einfachheits-Regeln (Plan Abschnitt 2) sind Abnahmekriterien: 5 Sekunden, 1 Hauptaktion,
   max. 3 Tipps, keine Formulare, keine Pflichtfelder, max. 1 Benachrichtigung und 1 Hinweiskarte pro Tag.
-- Kern importiert nie aus src/extensions/; Erweiterungen nur über Steckplätze.
+- Kern importiert nie aus src/extensions/; Erweiterungen nur über Steckplätze. Einziger Import des Registers: src/zusammenbau.ts.
+- Klick-Prototyp liegt in src/prototyp/ (Beispieldaten, Zustand); wird ab Phase 3 durch echte Daten ersetzt.
 - Riskantes zuerst als Machbarkeitstest, dann Oberfläche.
 - Vor größeren Änderungen kurzen Plan vorschlagen.
 - UI-Texte in src/i18n/de.json, Du-Form, Alltagssprache, nie über Körper urteilen.
