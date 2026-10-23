@@ -17,7 +17,9 @@ Arbeitsdokument; ersetzt keine geprüfte Datenschutzerklärung.
 | RevenueCat | Abos | – | [ ] |
 
 ## Datenflüsse
-(wird ab Phase 2 ergänzt)
+- **Anonymes Gerätekonto** (Plan 7.9): zufällige Konto-ID bei Supabase, keine E-Mail, keine Schrankdaten. Zweck: Schutz der KI-Schnittstelle, Kontingent. Löschung über "Konto löschen" oder nach 12 Monaten ohne Nutzung.
+- **Echtheitsprüfung** (App Attest / Play Integrity): Ergebnis (geprüft/fehlgeschlagen, Zeitpunkt) am Gerätekonto. Apple bzw. Google verarbeiten dabei Gerätesignale; in Datenschutzerklärung nennen.
+- Weitere Flüsse werden ab Phase 2 ergänzt.
 
 ## Checkliste
 Siehe KLEIDERSCHRANK_PLAN.md Abschnitt 11.

@@ -29,6 +29,7 @@ Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 - Vor größeren Änderungen kurzen Plan vorschlagen.
 - UI-Texte in src/i18n/de.json, Du-Form, Alltagssprache, nie über Körper urteilen.
 - Keine API-Schlüssel im App-Code; externe Dienste nur über src/services/*.
+- Edge Functions nur mit gültigem Gerätekonto; Kontingent serverseitig zählen (Plan 7.9).
 - Fotos bleiben lokal; vor jedem KI-Upload: verkleinern, Metadaten entfernen, Gesichter verpixeln.
 - Farbtyp-Selfies verlassen nie das Gerät.
 - KI-Ergebnisse nie ohne das "Ja" auf der Bestätigungskarte speichern; Unsicheres hervorheben; Erkanntes kennzeichnen.

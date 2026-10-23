@@ -187,7 +187,7 @@ Kennzeichnung: **[F]** Gratis, **[P]** Premium, **[F/P]** Gratis mit Grenze. Gel
 
 ### Grundlagen
 - **K29** **Datenschutz-Übersicht in einfacher Sprache**, KI abschaltbar (dann Bildauswahl statt Erkennung). **[F]**
-- **K30** **Kein Konto nötig.** Cloud-Sicherung als ein Schalter; dabei wird im Hintergrund ein Konto angelegt (E-Mail-Link oder Mit Apple anmelden). Sicherung Ende-zu-Ende verschlüsselt. **[P]**
+- **K30** **Kein Konto nötig.** Cloud-Sicherung als ein Schalter; dabei wird das unsichtbare Gerätekonto (Abschnitt 7.9) mit E-Mail-Link oder Mit Apple anmelden verknüpft. Sicherung Ende-zu-Ende verschlüsselt. **[P]**
 - **K31** Export (alles als ZIP), Import auf neuem Gerät, **Konto in der App löschen**. **[F]**
 - **K32** **Widget** auf Home- und Sperrbildschirm: heutiges Outfit und Wetter. **[F]**
 - **K33** Barrierefreiheit: Systemschriftgrößen, Screenreader, große Tippflächen, Hell/Dunkel/Reizarm, Farben immer mit Namen. **[F]**
@@ -252,6 +252,7 @@ Jede Erweiterung: ein Schalter, ein Satz Erklärung, ein Bild. Ausschalten blend
 ### 7.1 Offline zuerst
 - Alles lokal (SQLite plus Fotodateien). Jede Tabelle: `id` (UUID im Gerät), `updated_at`, `deleted_at`.
 - Ohne Konto bleibt alles lokal. Server nur für KI-Anfragen (ohne Speicherung), verschlüsselte Sicherung, Umfrage-Links.
+- Für KI-Anfragen gibt es ein unsichtbares, anonymes Gerätekonto (Abschnitt 7.9); es enthält keine Schrankdaten.
 
 ### 7.2 Kamera-Pipeline (K01–K10, K26, K27)
 
@@ -276,7 +277,7 @@ Foto
 ### 7.3 Spiegel-Selfie-Zuordnung (K26)
 - Pro erkanntem Teil Kandidaten bewerten: Kategorie (Pflicht), Farbabstand ΔE, Muster, Merkmale, Häufigkeit, Wäschestand.
 - Ergebnis: sicher (vorausgewählt) | knapp (Auswahl aus 2–3 Bildern) | neu (als neues Teil vorschlagen).
-- Schwellenwerte in `src/features/diary/matching.config.ts`, festgelegt durch den Machbarkeitstest in Phase 2.
+- Schwellenwerte in `src/core/diary/matching.config.ts`, festgelegt durch den Machbarkeitstest in Phase 2.
 - Optional später: Bild-Ähnlichkeit auf dem Gerät (kleines Embedding-Modell, ONNX Runtime), nur wenn der Test es nötig macht.
 
 ### 7.4 Outfit-Engine (K11–K18), komplett lokal ohne KI
@@ -333,6 +334,19 @@ export const manifest: ExtensionManifest = {
 
 - Bild auf max. 1024 px, Metadaten entfernt, Gesichter verpixelt. Feste System-Anweisung pro Aufgabe auf Deutsch, Temperatur 0, **nur JSON**, Zod-Prüfung, ein Neuversuch, sonst manueller Rückfall.
 - **Keine Inhalte loggen, keine Bilder speichern**, nur Zähler und Fehlercodes.
+- Jede Edge Function akzeptiert nur Anfragen mit gültigem Gerätekonto (Abschnitt 7.9); Kontingent wird **auf dem Server** gezählt, nie nur in der App.
+
+### 7.9 Schutz der KI-Schnittstelle (Gerätekonto und Echtheitsprüfung)
+
+Problem: Ohne Konto und mit Gratis-Kontingent könnte jeder die Edge Functions direkt aufrufen; die Kosten trägt der Betreiber.
+
+- **Unsichtbares Gerätekonto:** Beim ersten KI-Aufruf legt die App per Supabase Anonymous Sign-in ein anonymes Konto an. Der Nutzer sieht davon nichts; es gibt weder E-Mail noch Passwort. Bei Cloud-Sicherung (K30) wird genau dieses Konto mit E-Mail oder Apple verknüpft.
+- **Echtheitsprüfung:** Beim Anlegen und danach regelmäßig weist die App nach, dass sie die echte App auf einem echten Gerät ist: iOS App Attest, Android Play Integrity. Prüfung serverseitig in einer Edge Function `attest`; Ergebnis wird am Gerätekonto gespeichert.
+- **Weiche Regel bei fehlgeschlagener Prüfung** (z. B. gerootetes oder altes Gerät, Entwicklungs-Build): KI bleibt nutzbar, aber mit kleinem Kontingent (Startwert 5 pro Monat) und strengerer Drosselung. Werte nur in `src/core/paywall/limits.ts` und gespiegelt in der Server-Konfiguration.
+- **Drosselung pro Gerätekonto** (z. B. höchstens 20 Anfragen pro Minute) und globale Tagesobergrenze als Kostenbremse; bei Überschreitung freundlicher Hinweis und manueller Rückfall (Bildauswahl).
+- **Zählung serverseitig** in `ai_usage` pro Gerätekonto und Monat; die lokale Tabelle `ai_usage` ist nur Anzeige.
+- **Neuinstallation** erzeugt ein neues Gerätekonto. Missbrauch dadurch wird durch die Echtheitsprüfung begrenzt (App Attest und Play Integrity liefern geräte- bzw. installationsbezogene Signale) und durch die globale Obergrenze gedeckelt. Restrisiko akzeptiert.
+- **Datenschutz:** Gerätekonto-ID und Prüfergebnis sind personenbezogene Daten; in Datenschutzerklärung und `docs/DATENSCHUTZ.md` aufnehmen. Löschung über "Konto löschen" (K31) oder automatisch nach 12 Monaten ohne Nutzung.
 
 ### 7.7 Cloud-Sicherung (K30)
 - Datenbank-Export und Fotos werden **auf dem Gerät verschlüsselt** (libsodium); Schlüssel aus einem Wiederherstellungs-Code, den der Nutzer einmal sicher aufbewahrt (als Bild speichern oder ausdrucken).
@@ -359,7 +373,7 @@ src/
   db/                   schema.ts migrations/ repositories/
   i18n/                 de.json
 supabase/
-  migrations/  functions/ (ai-vision, ai-text, backup, share-poll, revenuecat-webhook, delete-account)
+  migrations/  functions/ (attest, ai-vision, ai-text, backup, share-poll, revenuecat-webhook, delete-account)
 tests/
   fixtures/  eval/      (KI-Testsatz; Fotos nicht im Repository)
 docs/
@@ -371,7 +385,7 @@ docs/
 ## 8. Datenmodell
 
 **Kern (lokal; Cloud nur als verschlüsselte Sicherung)**
-- `items` (id, name, category, subcategory, pattern, cut, details_json, formality, seasons[], merkmal, status: `active|sold|donated|discarded`, purchase_price_cents?, purchase_date?, shop?, favorite, created_at, updated_at, deleted_at)
+- `items` (id, name, category, subcategory, pattern, cut, details_json, formality, seasons[], status: `active|sold|donated|discarded`, purchase_price_cents?, purchase_date?, shop?, favorite, created_at, updated_at, deleted_at)
 - `item_photos` (id, item_id, kind: `front|back|worn|label|care|other`, uri, thumb_uri, mask_uri?)
 - `item_colors` (item_id, rank, hex, lab_l, lab_a, lab_b, name_de)
 - `item_labels` (item_id, brand?, size_system?, size_value?, size_secondary?, composition_json, origin?, article_no?)
@@ -392,7 +406,7 @@ docs/
 
 **Erweiterungen:** eigene Tabellen mit Präfix `ext_<id>_`, angelegt über die Migrationen im Manifest.
 
-**Server (Supabase):** `accounts`, `ai_usage`, `backups` (Metadaten verschlüsselter Dateien), `shared_wardrobes` (E16), `polls` (E18, ablaufend). Row Level Security für alles, mit SQL-Tests.
+**Server (Supabase):** `accounts` (auch anonyme Gerätekonten), `device_attestations` (account_id, platform, status: `verified|failed|pending`, checked_at), `ai_usage` (account_id, month, count), `backups` (Metadaten verschlüsselter Dateien), `shared_wardrobes` (E16), `polls` (E18, ablaufend). Row Level Security für alles, mit SQL-Tests.
 
 ---
 
@@ -412,7 +426,8 @@ docs/
 | Wetter | Bright Sky (Daten Deutscher Wetterdienst, CC BY 4.0, Namensnennung); Rückfall Open-Meteo **kommerzieller** Plan |
 | Benachrichtigungen | expo-notifications mit eigenem Planer (iOS: max. 64 geplante) und Budget |
 | Widget | iOS-Widget-Target per Config-Plugin, Android-Widget-Bibliothek |
-| Backend | Supabase Frankfurt (eu-central-1): Auth, Storage, Edge Functions |
+| Backend | Supabase Frankfurt (eu-central-1): Auth (inkl. Anonymous Sign-in), Storage, Edge Functions |
+| Echtheitsprüfung | iOS App Attest, Android Play Integrity API (Abschnitt 7.9) |
 | KI | Mistral Small 3.2 (Bild und Text) über Edge Function, austauschbar |
 | Verschlüsselung | libsodium |
 | Bezahlung | RevenueCat |
@@ -435,7 +450,8 @@ docs/
 **Vor dem Start**
 - [ ] Nebentätigkeit beim Arbeitgeber anzeigen oder genehmigen lassen
 - [ ] App-Name: Markenrecherche (DPMA, EUIPO), Domain, Store-Namen
-- [ ] Konten: Apple-Entwickler, Google Play, Expo, Supabase, Mistral, RevenueCat, Sentry
+- [ ] Konten: Apple-Entwickler (99 $/Jahr, **vor Phase 0 nötig**, Freischaltung kann Tage dauern), Google Play (25 $ einmalig, spätestens vor Beta), Expo, Supabase, Mistral, RevenueCat, Sentry
+- [ ] Android-Testgerät (Entscheidung: Android gleichwertig)
 
 **Vor dem ersten externen Tester**
 - [ ] Gewerbe anmelden
@@ -447,6 +463,7 @@ docs/
 - [ ] Hinweis: Kinder nicht mitfotografieren; erkannte Gesichter werden immer verpixelt
 - [ ] Namensnennung Wetterdaten ("Deutscher Wetterdienst")
 - [ ] Mindestalter für Konten 16 Jahre
+- [ ] Anonymes Gerätekonto und Echtheitsprüfung (Abschnitt 7.9) in der Datenschutzerklärung beschrieben
 
 **Vor dem Store-Launch**
 - [ ] Konto-Löschung in der App (Apple-Regel 5.1.1(v)); App ohne Konto nutzbar
@@ -474,7 +491,7 @@ docs/
 
 Das Geldmodell ist noch nicht entschieden. **Vorläufig Freemium mit Abo.** Grenzen und Premium-Kennzeichnung nur in `src/core/paywall/limits.ts` und in den Erweiterungs-Manifesten.
 
-**Gratis:** unbegrenzt Teile, Heute-Outfit, Anziehen, Vorabend-Outfit, Wäsche, Farbtyp, Größenprofil, Widget, alle Gratis-Erweiterungen, **30 KI-Erkennungen pro Monat** (Wert nach Beta anpassen), Export, Konto löschen.
+**Gratis:** unbegrenzt Teile, Heute-Outfit, Anziehen, Vorabend-Outfit, Wäsche, Farbtyp, Größenprofil, Widget, alle Gratis-Erweiterungen, **30 KI-Erkennungen pro Monat** (Wert nach Beta anpassen; 5 pro Monat bei fehlgeschlagener Echtheitsprüfung, Abschnitt 7.9), Export, Konto löschen.
 
 **Premium:** unbegrenzte KI-Erkennungen (Etiketten, Spiegel-Selfie, Kaufcheck, Galerie-Stapel, Teilen-Import), Cloud-Sicherung, alle Premium-Erweiterungen.
 
@@ -499,7 +516,7 @@ Das Geldmodell ist noch nicht entschieden. **Vorläufig Freemium mit Abo.** Gren
 
 ## 15. Qualität
 
-- **Unit-Tests:** Fototyp-Vorentscheidung, Gruppierung, Farben, Farbharmonie und Palette, Engine (Filter, Bewertung, Teil tauschen, Begründung, Mitnehm-Hinweis), Material-Wetter, Waschgruppen, Größen und Größenprofil, Preis pro Tragen, Selfie-Zuordnung, Hinweiskarten-Warteschlange, Benachrichtigungs-Budget, Erweiterungs-Register (ein/aus ohne Kern-Änderung), Limits, Verschlüsselung.
+- **Unit-Tests:** Fototyp-Vorentscheidung, Gruppierung, Farben, Farbharmonie und Palette, Engine (Filter, Bewertung, Teil tauschen, Begründung, Mitnehm-Hinweis), Material-Wetter, Waschgruppen, Größen und Größenprofil, Preis pro Tragen, Selfie-Zuordnung, Hinweiskarten-Warteschlange, Benachrichtigungs-Budget, Erweiterungs-Register (ein/aus ohne Kern-Änderung), Limits und serverseitiges Kontingent inkl. weicher Regel bei fehlgeschlagener Echtheitsprüfung, Verschlüsselung.
 - **KI-Testsatz** (`tests/eval/`): 30 Größenschilder, 20 Pflegeetiketten, 50 Spiegel-Selfies, 40 Kleidungsfotos für Fototyp und Kategorie; Fotos privat, nicht im Repository; Skript misst Trefferquoten.
 - **Nutzertests** nach Regel 14 (Abschnitt 2) in jeder Phase mit Oberfläche.
 - **Leistung:** Heute-Bildschirm mit Outfit unter 1 s; Freistellen unter 2 s pro Foto auf einem 3 Jahre alten Handy; Schrank mit 500 Teilen scrollt flüssig.
@@ -511,7 +528,8 @@ Das Geldmodell ist noch nicht entschieden. **Vorläufig Freemium mit Abo.** Gren
 ## 16. Arbeitsweise ohne Mac (nur Smartphone)
 
 1. Code auf GitHub; Claude Code arbeitet in Branches und Pull Requests.
-2. EAS Build in der Cloud; Entwicklungs-Build pro nativer Änderung (Modul `native-vision`, Widget, Berechtigungen), installiert auf dem iPhone oder über TestFlight.
+2. EAS Build in der Cloud; Entwicklungs-Build pro nativer Änderung (Modul `native-vision`, Widget, Berechtigungen), installiert auf dem iPhone (internal distribution, Gerät vorher registriert) und auf Android (Installationsdatei direkt). Voraussetzung iOS: bezahltes Apple-Entwicklerkonto; Zugang für EAS über einen App-Store-Connect-API-Schlüssel, der im Browser erzeugt und bei Expo hinterlegt wird (kein Mac, keine interaktive Anmeldung).
+   Builds werden über GitHub Actions per Knopf in der GitHub-App gestartet; jeder native Fehler kostet einen Build, daher gepflegte Bibliotheken vor eigenem nativem Code.
 3. Reine JavaScript-Änderungen per EAS Update auf den Vorschau-Kanal.
 4. Supabase über Web-Dashboard und Migrationen im Repository.
 5. Pro Sitzung ein klar umrissenes Ziel aus der aktuellen Phase.
@@ -527,9 +545,11 @@ Grobe Schätzung bei etwa 4 Stunden pro Woche mit Claude Code: **Beta nach Phase
 #### Phase 0 – Grundlagen
 - Repository, Expo-Projekt (TypeScript, Expo Router), ESLint, Prettier, Jest
 - `CLAUDE.md` (Anhang A), `docs/`-Dateien
-- EAS eingerichtet, erster Entwicklungs-Build auf dem iPhone
+- Voraussetzungen (Entwickler): Apple-Entwicklerkonto aktiv, App-Store-Connect-API-Schlüssel bei Expo hinterlegt, Android-Testgerät vorhanden
+- EAS eingerichtet, erster Entwicklungs-Build auf iPhone und Android
+- GitHub Actions: Lint, Typprüfung, Tests bei jedem Push; EAS-Build und Supabase-Deploy per Knopf
 - Supabase-Projekt in Frankfurt, Edge Function "hallo"
-- **Abnahme:** App startet über EAS auf dem iPhone; Tests grün; Edge Function antwortet.
+- **Abnahme:** App startet über EAS auf iPhone und Android; Tests grün (CI); Edge Function antwortet in der App.
 
 #### Phase 1 – Klick-Prototyp und Fundament
 - Design-System (Abschnitt 14), Navigation mit drei Bereichen (Abschnitt 3.1), i18n, lokale Datenbank, Foto-Speicher
@@ -540,9 +560,14 @@ Grobe Schätzung bei etwa 4 Stunden pro Woche mit Claude Code: **Beta nach Phase
 #### Phase 2 – Bildverarbeitung und Machbarkeitstests
 - Expo-Modul `native-vision` (Freistellen, Texterkennung, Gesichter, Rechtecke) auf beiden Plattformen
 - Edge Functions `ai-vision` und `ai-text` mit Mistral, Zod-Schemas, Kontingent
-- **Machbarkeitstests per Skript, ohne Oberfläche:** Fototyp-Erkennung (40 Fotos), Gruppierung (10 Serien), Größenschilder (30), Pflegeetiketten (20), Spiegel-Selfies (50 Fotos gegen ca. 40 Teile)
+- Gerätekonto und Echtheitsprüfung (Abschnitt 7.9): Anonymous Sign-in, Edge Function `attest`, serverseitige Zählung und Drosselung
+- **Machbarkeitstests ohne Nutzer-Oberfläche**, in zwei Teilen:
+  - **Auf dem Gerät:** versteckter Testbildschirm im Entwicklungs-Build (nur in Entwicklungs-Builds enthalten). Er verarbeitet einen Ordner Testfotos aus der Galerie mit `native-vision` (lokale Fototyp-Vorentscheidung, Freistellen, Texterkennung, Gesichter) und exportiert die Ergebnisse als JSON-Datei über das Teilen-Menü.
+  - **Per Skript (Node, in GitHub Actions oder lokal in Claude Code):** wertet die exportierten JSON-Dateien aus und schickt die KI-Aufgaben an die Edge Functions; misst Trefferquoten gegen die erwarteten Werte in `tests/eval/`.
+  - Umfang: Fototyp-Erkennung (40 Fotos), Gruppierung (10 Serien), Größenschilder (30), Pflegeetiketten (20), Spiegel-Selfies (50 Fotos gegen ca. 40 Teile)
 - Kosten pro Aufgabe mit echten Aufrufen messen
-- **Abnahme:** Fototyp ≥ 95 % richtig; Gruppierung ≥ 95 % richtig; Größenschild ≥ 90 %; Pflegesymbole ≥ 80 %; Spiegel-Selfie: richtiges Teil unter den Top 3 in ≥ 80 %. **Wird ein Wert nicht erreicht:** anhalten, Ergebnisse vorlegen, Entscheidung einholen.
+- Missbrauchstest: Aufruf der Edge Functions ohne gültiges Gerätekonto wird abgelehnt; Kontingent und Drosselung greifen
+- **Abnahme:** Fototyp ≥ 95 % richtig; Gruppierung ≥ 95 % richtig; Größenschild ≥ 90 %; Pflegesymbole ≥ 80 %; Spiegel-Selfie: richtiges Teil unter den Top 3 in ≥ 80 %; Werte auf iPhone und Android erreicht; Missbrauchstest bestanden. **Wird ein Wert nicht erreicht:** anhalten, Ergebnisse vorlegen, Entscheidung einholen.
 
 #### Phase 3 – Kamera und Erfassung
 - K01–K10, K29 (Datenschutz-Übersicht, KI abschaltbar)
@@ -613,6 +638,7 @@ Reihenfolge innerhalb der Pakete nach Beta-Feedback. **Gemeinsame Abnahme für j
 | Freistellen schlecht bei hellen Teilen auf hellem Grund | Tipp "dunkler Untergrund", Pinsel-Korrektur |
 | Wetter- oder Kalenderdienst nicht erreichbar | Vorschlag ohne diese Daten, freundlicher Hinweis statt Fehler |
 | KI-Anbieter ändert Preise | Schnittstelle, zweiter Anbieter, Kontingente |
+| Missbrauch der KI-Schnittstelle (Kostenfalle) | Gerätekonto, Echtheitsprüfung, serverseitiges Kontingent, Drosselung, globale Tagesobergrenze (Abschnitt 7.9) |
 | Datenschutzverstoß durch Personenfotos | Verpixeln auf dem Gerät, keine Speicherung, Prüfung per Netzwerk-Mitschnitt |
 | Wenig Zeit des Entwicklers | Launch nur mit Kern, Erweiterungen einzeln danach, keine zweite App parallel |
 
