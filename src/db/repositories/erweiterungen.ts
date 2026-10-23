@@ -1,4 +1,4 @@
-import type { ErweiterungsManifest, ErweiterungsZustand } from '../../core/extensions/typen';
+import type { ErweiterungsManifest, ErweiterungsZustand } from '../../core/steckplaetze/typen';
 import type { Datenbank } from '../typen';
 
 type Zeile = {

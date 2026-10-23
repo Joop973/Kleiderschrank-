@@ -1,5 +1,5 @@
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
-import type { PropsWithChildren } from 'react';
+import { useState, type PropsWithChildren, type ReactNode } from 'react';
 
 import { migriere } from './migrationen';
 import type { Datenbank } from './typen';
@@ -10,10 +10,18 @@ async function beimOeffnen(db: Datenbank) {
   await migriere(db);
 }
 
-/** Öffnet die lokale Datenbank einmal und migriert sie, bevor die App startet. */
-export function DatenbankProvider({ children }: PropsWithChildren) {
+/**
+ * Öffnet die lokale Datenbank einmal und migriert sie, bevor die App startet.
+ * Schlägt das fehl (z. B. Browser ohne Unterstützung), wird statt der App `fehlerAnzeige` gezeigt.
+ */
+export function DatenbankProvider({
+  children,
+  fehlerAnzeige,
+}: PropsWithChildren<{ fehlerAnzeige: (fehler: Error) => ReactNode }>) {
+  const [fehler, setFehler] = useState<Error | null>(null);
+  if (fehler) return <>{fehlerAnzeige(fehler)}</>;
   return (
-    <SQLiteProvider databaseName={DATENBANK_NAME} onInit={beimOeffnen}>
+    <SQLiteProvider databaseName={DATENBANK_NAME} onInit={beimOeffnen} onError={setFehler}>
       {children}
     </SQLiteProvider>
   );

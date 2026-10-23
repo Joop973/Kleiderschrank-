@@ -1,4 +1,4 @@
-import type { ErweiterungsManifest } from '../../core/extensions/typen';
+import type { ErweiterungsManifest } from '../../core/steckplaetze/typen';
 import { migriere } from '../migrationen';
 import { leseEinstellung, schreibeEinstellung } from '../repositories/einstellungen';
 import {

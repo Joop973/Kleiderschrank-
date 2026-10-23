@@ -33,3 +33,8 @@ export async function merkeWeggetippt(db: Datenbank, id: string, tag: Tag): Prom
     id,
   ]);
 }
+
+/** Nur für die Testleitung im Prototyp: Verlauf leeren, damit Hinweiskarten wieder erscheinen. */
+export async function loescheHinweisVerlauf(db: Datenbank): Promise<void> {
+  await db.runAsync('DELETE FROM hints', []);
+}
