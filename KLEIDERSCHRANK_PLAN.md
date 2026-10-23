@@ -344,9 +344,9 @@ export const manifest: ExtensionManifest = {
 ### 7.8 Ordnerstruktur
 
 ```
-app/                    Expo-Router-Bildschirme (heute, schrank, kamera, mehr)
-modules/native-vision/  eigenes Expo-Modul (Swift, Kotlin)
+modules/native-vision/  eigenes Expo-Modul (Swift, Kotlin), erst Teil B
 src/
+  app/                  Expo-Router-Bildschirme (heute, schrank, kamera, mehr)
   shared/               design-system/ reminders/ ai-client/
   core/
     camera/ grouping/ labels/ today/ engine/ wardrobe/ laundry/

@@ -1,0 +1,23 @@
+{
+  "tabs": {
+    "heute": "Heute",
+    "kamera": "Kamera",
+    "schrank": "Schrank"
+  },
+  "heute": {
+    "titel": "Heute",
+    "platzhalter": "Hier erscheint bald dein Outfit für heute."
+  },
+  "kamera": {
+    "platzhalter": "Hier kommt bald die Kamera hin."
+  },
+  "schrank": {
+    "platzhalter": "Hier siehst du bald deinen Schrank."
+  },
+  "server": {
+    "pruefe": "Verbindung wird geprüft …",
+    "ok": "Server antwortet.",
+    "fehler": "Server gerade nicht erreichbar.",
+    "nichtEingerichtet": "Server noch nicht eingerichtet."
+  }
+}

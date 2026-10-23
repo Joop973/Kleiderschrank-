@@ -1,26 +1,32 @@
 # CLAUDE.md
 
 ## Projekt
+
 [APP-NAME]: die einfachste Kleiderschrank-App. Einfacher Kern + zuschaltbare Erweiterungen.
 Verbindlicher Bauplan: KLEIDERSCHRANK_PLAN.md. Aktueller Stand: docs/FORTSCHRITT.md.
 Entwickler arbeitet nur vom Smartphone, ohne Mac.
 Aktuell Teil A (Prototyp): läuft in Expo Go, nur iPhone, kein Apple-Entwicklerkonto. Store erst nach Entscheidung.
 
 ## Stack
+
 Expo (React Native, TypeScript), Expo Router, expo-sqlite + Drizzle, Zustand, TanStack Query,
 Prototyp: expo-camera, expo-image-manipulator, U²-Net in react-native-webview (Plan 7.10).
 Erst Teil B: eigenes Expo-Modul modules/native-vision (Apple Vision / ML Kit). Supabase (Frankfurt),
 Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 
 ## Befehle
+
 - Tests: npm test
 - Lint: npm run lint
+- Formatierung: npm run format (Prüfung: npm run format:check)
 - Typprüfung: npm run typecheck
 - KI-Testsatz: npm run eval
 - Supabase-Migration: supabase migration new <name>
-- Vorschau-Update: eas update --branch preview (läuft automatisch per GitHub Action)
+- Vorschau-Update: läuft automatisch per GitHub Action (.github/workflows/vorschau.yml, Kanal preview)
+- Abhängigkeiten: EXPO_OFFLINE=1 npx expo install <paket> (expo.dev ist aus der Cloud-Sitzung gesperrt)
 
 ## Regeln
+
 - Nur an der aktuellen Phase arbeiten, Abnahmekriterien abhaken.
 - Teil A: nur Bibliotheken, die in Expo Go laufen; kein eigener nativer Code. Sonst anhalten und fragen.
 - Branches: phase-XX-name; gibt die Claude-Code-Sitzung einen Branch vor, gilt dieser.

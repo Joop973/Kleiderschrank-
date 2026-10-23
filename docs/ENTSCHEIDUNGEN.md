@@ -46,6 +46,14 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 ## 2026-10-23 – Nutzertests reduziert
 - Mit 5 Personen nur nach Phase 1 und vor der Store-Entscheidung; sonst Eigentest.
 
+## 2026-10-23 – Phase 0: technische Festlegungen
+- Expo SDK 58 (laut App-Store-Eintrag von Expo Go unterstützt; bestätigt sich beim ersten Öffnen). Fallback bei "inkompatibel": SDK 57.
+- Bildschirme unter `src/app/` (aktuelle Expo-Konvention) statt `app/`; Plan 7.8 angepasst.
+- Projekt-ID von expo.dev nicht im Code, sondern als GitHub-Variable `EAS_PROJECT_ID` (app.config.ts).
+- Supabase-URL und Publishable Key als `EXPO_PUBLIC_*`-Variablen: diese Werte sind öffentlich gedacht und landen im App-Bundle; geheime Schlüssel bleiben auf dem Server.
+- Edge Function `hallo` ohne JWT-Prüfung (harmlos, keine Daten); ab Phase 2 prüfen KI-Funktionen das Gerätekonto selbst.
+- Updates: GitHub Action veröffentlicht nach jedem Push ein EAS Update auf Kanal `preview`; Link steht in der Zusammenfassung des Laufs.
+
 ## Offen
 - Geldmodell (vorläufig Freemium)
 - App-Name nach Markenrecherche

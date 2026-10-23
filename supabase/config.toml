@@ -1,0 +1,4 @@
+# Nur die für das Deployment nötigen Einstellungen.
+[functions.hallo]
+# "hallo" ist öffentlich und harmlos; ab Phase 2 prüfen alle KI-Funktionen das Gerätekonto selbst (Plan 7.9).
+verify_jwt = false

@@ -1,0 +1,48 @@
+name: Vorschau in Expo Go
+
+# Veröffentlicht nach jedem Push ein EAS Update auf den Kanal "preview".
+# Voraussetzungen: Secret EXPO_TOKEN, Variablen EAS_PROJECT_ID,
+# EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: vorschau-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    if: ${{ vars.EAS_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    env:
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      COMMIT_NACHRICHT: ${{ github.event.head_commit.message }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tests vor dem Veröffentlichen
+        run: npm test -- --ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: EAS Update veröffentlichen
+        run: |
+          NACHRICHT="$(printf '%s' "${COMMIT_NACHRICHT:-Manuell}" | head -n 1)"
+          eas update --channel preview --environment preview --non-interactive \
+            --message "$NACHRICHT (${GITHUB_SHA::7})" | tee update.log
+          {
+            echo "### Vorschau veröffentlicht"
+            echo
+            echo "Auf dem iPhone den Link öffnen und \"In Expo Go öffnen\" wählen:"
+            echo
+            grep -Eo 'https://expo\.dev/accounts/[^ ]+/updates/[^ ]+' update.log | head -n 1
+          } >> "$GITHUB_STEP_SUMMARY"
