@@ -1,6 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
-// Die Projekt-ID von expo.dev kommt aus der Umgebung (GitHub-Variable EAS_PROJECT_ID).
+// Teil A läuft als Webapp; die Einstellungen für native Builds (Projekt-ID, runtimeVersion)
+// werden erst in Teil B gebraucht. Die Projekt-ID von expo.dev kommt dann aus der Umgebung.
 const projectId = process.env.EAS_PROJECT_ID;
 
 const config: ExpoConfig = {
@@ -11,7 +12,6 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
-  // Expo Go lädt Updates mit der Laufzeit-Regel "appVersion" (ab SDK 49).
   runtimeVersion: { policy: 'appVersion' },
   ios: { supportsTablet: false },
   android: {
@@ -22,7 +22,7 @@ const config: ExpoConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
     },
   },
-  web: { favicon: './assets/favicon.png' },
+  web: { output: 'single', favicon: './assets/favicon.png', name: 'Kleiderschrank' },
   plugins: ['expo-router'],
   ...(projectId
     ? {

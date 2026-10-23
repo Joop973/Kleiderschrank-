@@ -29,7 +29,7 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 - Begründung: Entwickler will die App erst selbst nutzen und prüfen, ob sie etwas taugt.
 - Folge: Plan neu gegliedert in Teil A (Prototyp, Phasen 0–6), Teil B (Store-Vorbereitung, Phasen 7–11), Teil C (Erweiterungen, Phasen 12–15). Bezahlung, Cloud-Sicherung, Widget, Rechtstexte nach Teil B. Export bleibt früh (Phase 3).
 
-## 2026-10-23 – Prototyp nur in Expo Go, nur iPhone
+## 2026-10-23 – Prototyp nur in Expo Go, nur iPhone (ÜBERHOLT, siehe Webapp)
 - Begründung: nur iPhone vorhanden; kein Apple-Entwicklerkonto (99 $/Jahr) vor der Store-Entscheidung.
 - Folge: kein eigener nativer Code im Prototyp (Plan 7.10). Android gleichwertig erst ab Teil B. Ersetzt die Entscheidung "Android gleichwertig ab Phase 0".
 - Kosten: lokale Fototyp-Vorentscheidung, Texterkennung, Gesichtserkennung, Echtheitsprüfung und Widget fehlen im Prototyp.
@@ -47,12 +47,27 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 - Mit 5 Personen nur nach Phase 1 und vor der Store-Entscheidung; sonst Eigentest.
 
 ## 2026-10-23 – Phase 0: technische Festlegungen
-- Expo SDK 58 (laut App-Store-Eintrag von Expo Go unterstützt; bestätigt sich beim ersten Öffnen). Fallback bei "inkompatibel": SDK 57.
+- Expo SDK 58.
 - Bildschirme unter `src/app/` (aktuelle Expo-Konvention) statt `app/`; Plan 7.8 angepasst.
 - Projekt-ID von expo.dev nicht im Code, sondern als GitHub-Variable `EAS_PROJECT_ID` (app.config.ts).
 - Supabase-URL und Publishable Key als `EXPO_PUBLIC_*`-Variablen: diese Werte sind öffentlich gedacht und landen im App-Bundle; geheime Schlüssel bleiben auf dem Server.
 - Edge Function `hallo` ohne JWT-Prüfung (harmlos, keine Daten); ab Phase 2 prüfen KI-Funktionen das Gerätekonto selbst.
-- Updates: GitHub Action veröffentlicht nach jedem Push ein EAS Update auf Kanal `preview`; Link steht in der Zusammenfassung des Laufs.
+- (Überholt: EAS Update für Expo Go, siehe Webapp.)
+
+## 2026-10-23 – Prototyp als Webapp statt Expo Go
+- Begründung: keine Abhängigkeit von der Expo-Go-Version, keine Anmeldung in Expo Go, Testpersonen brauchen nur einen Link; Freistellen und Gesichtserkennung laufen im Browser direkt.
+- Folge: Expo Web als Home-Bildschirm-App, Hosting Netlify. Plattform-Code hinter `src/services/`; Umzug in Store-App in Phase 7 per Export/Import.
+- Kosten: kein Kalenderzugriff, Erinnerungen nur per Web-Push, Risiko Datenverlust durch Safari, Umzug später 1–2 Phasen.
+- Alternativen: Expo Go (verworfen), beides parallel (zu viel Pflege).
+
+## 2026-10-23 – Vorabend-Outfit per Web-Push ab Phase 4
+- Wunsch des Entwicklers: echte Abend-Benachrichtigung schon im Prototyp. Versand über Supabase zur gewählten Uhrzeit.
+
+## 2026-10-23 – Spiegel-Selfie zurück in den Prototyp (Machbarkeitstest Phase 2)
+- Gesichtserkennung und Verpixeln im Browser auf dem Gerät; bei Bestehen Umsetzung in Phase 6, sonst Phase 8.
+
+## 2026-10-23 – Veröffentlichung über main
+- Claude arbeitet auf Branches und öffnet Pull Requests; Netlify baut Vorschau-Adressen. Merge nach main durch den Entwickler ändert die Home-Bildschirm-App.
 
 ## Offen
 - Geldmodell (vorläufig Freemium)

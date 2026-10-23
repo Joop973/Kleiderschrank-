@@ -233,7 +233,7 @@ Jede Erweiterung: ein Schalter, ein Satz Erklärung, ein Bild. Ausschalten blend
 | Fototyp falsch erkannt (z. B. Etikett als Teil) | Bestätigungskarte zeigt den erkannten Typ klein mit "Ändern"; Korrekturen fließen in die lokalen Schwellenwerte |
 | Fotos falsch gruppiert | Foto auf der Karte per Ziehen einem anderen Teil zuordnen; Gruppierungsregel per Unit-Tests abgesichert |
 | Kaufcheck und neues Teil nutzen dieselbe Kamera | Eine Frage pro Kamera-Sitzung, Antwort gilt für die ganze Sitzung |
-| Spiegel-Selfie verwechselt ähnliche Teile | Nie still eintragen; knappe Treffer mit einem Tipp nachfragen; Bestätigungen werden Referenzbilder; **Machbarkeitstest in Phase 8**; Rückfall: "Anziehen"-Knopf deckt den Normalfall ohnehin ab |
+| Spiegel-Selfie verwechselt ähnliche Teile | Nie still eintragen; knappe Treffer mit einem Tipp nachfragen; Bestätigungen werden Referenzbilder; **Machbarkeitstest in Phase 2** (im Browser; sonst Phase 8); Rückfall: "Anziehen"-Knopf deckt den Normalfall ohnehin ab |
 | Farbanalyse per Foto unzuverlässig | Messung nur als Startwert, Pipette und Regler, weißes Blatt als Farbreferenz, Ergebnis als Palette mit ehrlichem Hinweis, alles auf dem Gerät |
 | Pflegeetikett sagt nichts über Haltbarkeit | Keine Haltbarkeitsnote; Pflegeaufwand und echte Werte (getragen, gewaschen) |
 | Gesichter in Fotos | Verpixeln auf dem Gerät vor jedem Upload, Metadaten entfernen, auf dem Server nichts speichern |
@@ -277,7 +277,7 @@ Foto
 ### 7.3 Spiegel-Selfie-Zuordnung (K26)
 - Pro erkanntem Teil Kandidaten bewerten: Kategorie (Pflicht), Farbabstand ΔE, Muster, Merkmale, Häufigkeit, Wäschestand.
 - Ergebnis: sicher (vorausgewählt) | knapp (Auswahl aus 2–3 Bildern) | neu (als neues Teil vorschlagen).
-- Schwellenwerte in `src/core/diary/matching.config.ts`, festgelegt durch den Machbarkeitstest in Phase 8.
+- Schwellenwerte in `src/core/diary/matching.config.ts`, festgelegt durch den Machbarkeitstest in Phase 2.
 - Optional später: Bild-Ähnlichkeit auf dem Gerät (kleines Embedding-Modell, ONNX Runtime), nur wenn der Test es nötig macht.
 
 ### 7.4 Outfit-Engine (K11–K18), komplett lokal ohne KI
@@ -377,30 +377,36 @@ Problem: Ohne Konto und mit Gratis-Kontingent könnte jeder die Edge Functions d
 - **Weiche Regel bei fehlgeschlagener Prüfung** (z. B. gerootetes oder altes Gerät, Entwicklungs-Build): KI bleibt nutzbar, aber mit kleinem Kontingent (Startwert 5 pro Monat) und strengerer Drosselung. Werte nur in `src/core/paywall/limits.ts` und gespiegelt in der Server-Konfiguration.
 - **Drosselung pro Gerätekonto** (z. B. höchstens 20 Anfragen pro Minute) und globale Tagesobergrenze als Kostenbremse; bei Überschreitung freundlicher Hinweis und manueller Rückfall (Bildauswahl).
 - **Zählung serverseitig** in `ai_usage` pro Gerätekonto und Monat; die lokale Tabelle `ai_usage` ist nur Anzeige.
-- **Prototyp (Teil A):** Echtheitsprüfung entfällt, da Expo Go keinen nativen Code ausführt (Abschnitt 7.10). Schutz nur über Gerätekonto, Kontingent, Drosselung und eine niedrige globale Tagesobergrenze; Restrisiko akzeptiert, solange die App nicht öffentlich ist.
+- **Prototyp (Teil A):** Echtheitsprüfung entfällt, da sie in einer Webapp nicht verfügbar ist (Abschnitt 7.10). Schutz nur über Gerätekonto, Kontingent, Drosselung und eine niedrige globale Tagesobergrenze; Restrisiko akzeptiert, solange die App nicht öffentlich ist.
 - **Neuinstallation** erzeugt ein neues Gerätekonto. Missbrauch dadurch wird durch die Echtheitsprüfung begrenzt (App Attest und Play Integrity liefern geräte- bzw. installationsbezogene Signale) und durch die globale Obergrenze gedeckelt. Restrisiko akzeptiert.
 - **Datenschutz:** Gerätekonto-ID und Prüfergebnis sind personenbezogene Daten; in Datenschutzerklärung und `docs/DATENSCHUTZ.md` aufnehmen. Löschung über "Konto löschen" (K31) oder automatisch nach 12 Monaten ohne Nutzung.
 
-### 7.10 Prototyp-Variante (Teil A, Expo Go)
+### 7.10 Prototyp-Variante (Teil A, Webapp)
 
-Expo Go führt keinen eigenen nativen Code aus. Bis zur Store-Vorbereitung (Teil B) gilt daher:
+Der Prototyp läuft als **Webapp im Browser** (Expo Web, als Home-Bildschirm-App auf dem iPhone). Derselbe Code wird in Teil B zur Store-App; Plattform-Unterschiede liegen hinter den Schnittstellen in `src/services/`.
 
-| Thema | Prototyp (Expo Go) | Endausbau (Teil B) |
+| Thema | Prototyp (Webapp) | Endausbau (Teil B) |
 |---|---|---|
-| Kamera | expo-camera, expo-image-picker | ggf. react-native-vision-camera |
-| Verkleinern, Metadaten entfernen | expo-image-manipulator (neu kodieren; Entfernen der Metadaten per Test belegen) | wie Prototyp |
-| Freistellen (K04) | U²-Net (u2netp, ca. 5 MB, Apache-2.0) mit onnxruntime-web in react-native-webview, auf dem Gerät; Rückfall: Originalfoto | Apple Vision / ML Kit über `native-vision` |
-| Farben (K05), Farbtyp (K28) | Pixel aus verkleinertem Bild in JavaScript lesen | wie Prototyp oder `native-vision` |
-| Fototyp-Erkennung (K01) | keine lokale Vorentscheidung; die KI bestimmt den Typ im selben Aufruf; offline wird das Foto vorgemerkt | lokale Vorentscheidung (Abschnitt 7.2) |
+| Auslieferung | Netlify; `main` = feste Adresse für den Home-Bildschirm, andere Branches = Vorschau-Adressen | App Store, Google Play |
+| Lokale Daten | im Browser (IndexedDB bzw. SQLite im Browser, Wahl in Phase 1); `navigator.storage.persist()` anfragen; Export früh (Phase 3) | expo-sqlite |
+| Kamera | Kamera im Browser (Foto-Auswahl mit Kamera bzw. getUserMedia) | expo-camera oder react-native-vision-camera |
+| Verkleinern, Metadaten entfernen | Canvas im Browser (neu kodieren entfernt Metadaten; per Test belegen) | expo-image-manipulator |
+| Freistellen (K04) | U²-Net (u2netp, ca. 5 MB, Apache-2.0) mit onnxruntime-web direkt im Browser, auf dem Gerät; Rückfall: Originalfoto | Apple Vision / ML Kit über `native-vision` |
+| Farben (K05), Farbtyp (K28) | Pixel per Canvas lesen | wie Prototyp oder `native-vision` |
+| Fototyp-Erkennung (K01) | Gesichtserkennung im Browser (Selfie); sonst bestimmt die KI den Typ im selben Aufruf; offline wird das Foto vorgemerkt | lokale Vorentscheidung (Abschnitt 7.2) |
 | Größenschild (K07) | Foto direkt an die KI (Etiketten enthalten keine Personendaten) | lokale Texterkennung, dann `label_extract` |
+| Spiegel-Selfie (K26) | Gesichtserkennung und Verpixeln im Browser auf dem Gerät (z. B. MediaPipe Face Detection, Lizenz prüfen); **Machbarkeitstest in Phase 2** | `native-vision` |
 | Teilen aus Shop (K10) | Link oder Text aus der Zwischenablage einfügen | Teilen-Menü des Systems |
-| Spiegel-Selfie (K26) | **entfällt** (Gesichter können nicht auf dem Gerät verpixelt werden) | Phase 8 |
+| Vorabend-Outfit (K16) | **Web-Push** über Supabase (geplanter Versand, VAPID); nur für Home-Bildschirm-App ab iOS 16.4; Bild des Outfits nur, wenn ohne Upload des Fotos machbar, sonst Text | lokale Benachrichtigung |
+| Kalender (K11) | kein Zugriff; Anlass per Antippen statt aus Terminen | expo-calendar |
+| Offline | Service Worker cacht die App (spätestens Phase 4) | nativ |
 | Echtheitsprüfung (7.9) | entfällt; Schutz nur über Gerätekonto, Kontingent, Drosselung und niedrige globale Tagesobergrenze | App Attest / Play Integrity |
 | Widget (K32), Cloud-Sicherung (K30), Bezahlung | entfallen | Phasen 9–11 |
-| Plattform | nur iPhone getestet | iPhone und Android gleichwertig |
+| Plattform | iPhone (Safari) getestet; Testpersonen per Link, auch Android | iPhone und Android gleichwertig |
 
-- Regel: Im Prototyp nur Bibliotheken, die in Expo Go laufen. Wird etwas Natives unvermeidbar, anhalten und Entscheidung einholen.
-- Die Ordnerstruktur bleibt gleich; die Prototyp-Varianten liegen hinter denselben Schnittstellen in `src/services/` (z. B. `vision/`), damit Teil B nur die Umsetzung tauscht.
+- Regel: Bibliotheken müssen im Browser laufen und dürfen den späteren Store-Weg nicht verbauen (lieber Expo-Pakete mit Web-Unterstützung).
+- Modelle (U²-Net, Gesichtserkennung) werden mit der App ausgeliefert, nicht von fremden Servern geladen.
+- **Umzug in die Store-App (Teil B):** Daten wandern per Export/Import; Speicher, Kamera, Benachrichtigungen und Bildverarbeitung bekommen native Umsetzungen hinter denselben Schnittstellen.
 
 ---
 
@@ -441,8 +447,9 @@ Expo Go führt keinen eigenen nativen Code aus. Bis zur Store-Vorbereitung (Teil
 | Mindestversion | iOS 17, Android 10 (vor Start prüfen; iOS 17 für Freistellen über Apple Vision) |
 | Lokale Daten | expo-sqlite mit Drizzle ORM; Fotos als WebP (max. 1600 px, Vorschau 400 px) |
 | Zustand | Zustand (UI), TanStack Query (Server) |
-| Bildverarbeitung | Prototyp: siehe Abschnitt 7.10 (U²-Net in Webansicht, expo-image-manipulator). Teil B: eigenes Expo-Modul `native-vision`: iOS Apple Vision (Freistellen, Text, Gesichter, Rechtecke), Android Google ML Kit (Subject Segmentation, Text, Gesichter); vorher prüfen, ob gepflegte Bibliotheken reichen (z. B. `react-native-subject-lift`, MIT) |
-| Kamera | Prototyp: expo-camera; Teil B ggf. react-native-vision-camera |
+| Bildverarbeitung | Prototyp: siehe Abschnitt 7.10 (U²-Net und Gesichtserkennung im Browser, Canvas). Teil B: eigenes Expo-Modul `native-vision`: iOS Apple Vision (Freistellen, Text, Gesichter, Rechtecke), Android Google ML Kit (Subject Segmentation, Text, Gesichter); vorher prüfen, ob gepflegte Bibliotheken reichen (z. B. `react-native-subject-lift`, MIT) |
+| Kamera | Prototyp: Kamera im Browser; Teil B expo-camera oder react-native-vision-camera |
+| Webapp-Hosting (Teil A) | Netlify (kostenlos), Home-Bildschirm-App per Web-Manifest |
 | Farben | eigener Code (k-Means, Lab, ΔE, deutsche Farbnamen) |
 | Kalender | expo-calendar (nur lesen) |
 | Wetter | Bright Sky (Daten Deutscher Wetterdienst, CC BY 4.0, Namensnennung); Rückfall Open-Meteo **kommerzieller** Plan |
@@ -548,42 +555,42 @@ Das Geldmodell ist noch nicht entschieden. **Vorläufig Freemium mit Abo.** Gren
 
 ## 16. Arbeitsweise ohne Mac (nur Smartphone)
 
-**Teil A – Prototyp (Expo Go, nur iPhone, kein Apple-Entwicklerkonto)**
-1. Code auf GitHub; Claude Code arbeitet in Branches und Pull Requests.
-2. Die App läuft in **Expo Go** (kostenlos im App Store). Nur Bibliotheken, die in Expo Go enthalten sind; kein eigener nativer Code, keine Config-Plugins mit nativem Code.
-3. Jeder Push auf den Arbeits-Branch veröffentlicht per GitHub Action ein **EAS Update**; geöffnet wird es auf dem iPhone über Link oder QR-Code in Expo Go.
-4. GitHub Actions prüfen bei jedem Push Lint, Typprüfung und Tests; Ergebnis sichtbar in der GitHub-App.
-5. Supabase über Web-Dashboard und Migrationen im Repository; Deploy der Edge Functions per GitHub Action.
-6. Pro Sitzung ein klar umrissenes Ziel aus der aktuellen Phase.
-7. **Risiko Expo Go:** Expo Go im App Store unterstützt nur die aktuelle SDK-Version. Nach einem großen Expo-Go-Update muss das Projekt auf das neue SDK gehoben werden, bevor es wieder startet. Daher Export (K31) früh, damit keine Daten verloren gehen.
+**Teil A – Prototyp (Webapp, kein Apple-Entwicklerkonto)**
+1. Code auf GitHub; Claude Code arbeitet in Branches und öffnet Pull Requests.
+2. **Netlify** baut bei jedem Push: jeder Branch bekommt eine Vorschau-Adresse; `main` ist die feste Adresse der Home-Bildschirm-App. Der Entwickler entscheidet per Merge in der GitHub-App, wann sich seine App ändert.
+3. GitHub Actions prüfen bei jedem Push Formatierung, Lint, Typprüfung und Tests; Ergebnis sichtbar in der GitHub-App.
+4. Supabase über Web-Dashboard und Migrationen im Repository; Deploy der Edge Functions per GitHub Action.
+5. Pro Sitzung ein klar umrissenes Ziel aus der aktuellen Phase.
+6. **Risiko Browser-Speicher:** Safari kann Daten von Webseiten löschen (bei Speichermangel, bei Webseiten ohne Home-Bildschirm nach 7 Tagen ohne Nutzung). Daher als Home-Bildschirm-App nutzen, dauerhaften Speicher anfragen und Export früh (Phase 3).
 
 **Teil B – Store-Vorbereitung (eigene Builds)**
 1. EAS Build in der Cloud; Entwicklungs-Build pro nativer Änderung (Modul `native-vision`, Widget, Berechtigungen), installiert auf dem iPhone (internal distribution, Gerät vorher registriert) und auf Android (Installationsdatei direkt).
 2. Voraussetzung iOS: bezahltes Apple-Entwicklerkonto; Zugang für EAS über einen App-Store-Connect-API-Schlüssel, der im Browser erzeugt und bei Expo hinterlegt wird (kein Mac, keine interaktive Anmeldung).
 3. Builds werden über GitHub Actions per Knopf in der GitHub-App gestartet; jeder native Fehler kostet einen Build, daher gepflegte Bibliotheken vor eigenem nativem Code.
-4. Reine JavaScript-Änderungen weiter per EAS Update.
+4. Reine JavaScript-Änderungen per EAS Update.
 
 ---
 
 ## 17. Phasenplan mit Abnahmekriterien
 
-**Vorgehen:** Erst einen Prototyp bauen, der in Expo Go auf dem iPhone läuft, und ihn selbst nutzen (Teil A). Danach entscheiden, ob die App in die Stores geht (Teil B). Erweiterungen erst nach dem Launch (Teil C).
+**Vorgehen:** Erst einen Prototyp als Webapp bauen, ihn als Home-Bildschirm-App auf dem iPhone selbst nutzen (Teil A). Danach entscheiden, ob die App in die Stores geht (Teil B). Erweiterungen erst nach dem Launch (Teil C).
 
 **Grobe Schätzung** bei etwa 4 Stunden pro Woche mit Claude Code: Prototyp (Teil A) ca. 4 bis 7 Monate; Store-Vorbereitung (Teil B) weitere ca. 4 bis 8 Monate. Ehrliche Unsicherheit: hoch.
 
-**Nutzertests (Regel 14) im Prototyp reduziert:** mit 5 Personen nur nach Phase 1 (Klick-Prototyp) und vor der Store-Entscheidung; in den übrigen Phasen Eigentest. Testpersonen nutzen ebenfalls Expo Go (iPhone oder Android).
+**Nutzertests (Regel 14) im Prototyp reduziert:** mit 5 Personen nur nach Phase 1 (Klick-Prototyp) und vor der Store-Entscheidung; in den übrigen Phasen Eigentest. Testpersonen bekommen einen Link (iPhone oder Android).
 
-### Teil A – Prototyp (Expo Go, iPhone, Eigennutzung)
+### Teil A – Prototyp (Webapp, iPhone, Eigennutzung)
 
 Was im Prototyp fehlt oder anders ist, steht in Abschnitt 7.10.
 
 #### Phase 0 – Grundlagen
-- Repository, Expo-Projekt (aktuelles SDK, das Expo Go im App Store unterstützt; TypeScript, Expo Router), ESLint, Prettier, Jest
+- Repository, Expo-Projekt (TypeScript, Expo Router, Web-Ausgabe), ESLint, Prettier, Jest
 - `CLAUDE.md`, `docs/`-Dateien
-- Konten (Entwickler): Expo, Supabase (kostenlos). GitHub-Secrets `EXPO_TOKEN`, `SUPABASE_ACCESS_TOKEN`
-- GitHub Actions: Lint, Typprüfung, Tests bei jedem Push; EAS Update bei jedem Push; Supabase-Deploy
+- Home-Bildschirm-App: Manifest, Symbole, Apple-Angaben
+- Konten (Entwickler): Netlify, Supabase (kostenlos). GitHub-Secret `SUPABASE_ACCESS_TOKEN`
+- GitHub Actions: Prüfung bei jedem Push; Supabase-Deploy. Netlify baut selbst.
 - Supabase-Projekt in Frankfurt, Edge Function "hallo"
-- **Abnahme:** App öffnet sich per Link in Expo Go auf dem iPhone; Tests grün (CI); Edge Function antwortet in der App.
+- **Abnahme:** Webapp öffnet sich auf dem iPhone über die feste Adresse und lässt sich zum Home-Bildschirm hinzufügen; Tests grün (CI); Edge Function antwortet in der App.
 
 #### Phase 1 – Klick-Prototyp und Fundament
 - Design-System (Abschnitt 14), Navigation mit drei Bereichen (Abschnitt 3.1), i18n, lokale Datenbank, Foto-Speicher
@@ -592,14 +599,15 @@ Was im Prototyp fehlt oder anders ist, steht in Abschnitt 7.10.
 - **Abnahme:** Nutzertest mit 5 Personen: jeder Ablauf wird ohne Erklärung in der Soll-Tippzahl geschafft (sonst Prototyp vereinfachen); Test-Erweiterung lässt sich ein- und ausschalten, ohne dass Kern-Tests sich ändern; VoiceOver liest alle Knöpfe.
 
 #### Phase 2 – Machbarkeitstests (Freistellen und KI)
-- **Freistellen auf dem Gerät** (Abschnitt 7.10): U²-Net (u2netp, Apache-2.0) mit onnxruntime-web in einer eingebetteten Webansicht
+- **Freistellen auf dem Gerät** (Abschnitt 7.10): U²-Net (u2netp, Apache-2.0) mit onnxruntime-web im Browser
+- **Spiegel-Selfie auf dem Gerät:** Gesichtserkennung und Verpixeln im Browser; Edge-Function-Aufgabe `outfit_photo_garments`; Zuordnung (Abschnitt 7.3)
 - Edge Function `ai-vision` mit Mistral (Kleidungsstück inkl. Fototyp, Größenschild als Bild, Pflegeetikett), Zod-Schemas
 - Gerätekonto ohne Echtheitsprüfung (Abschnitt 7.9, Prototyp-Stufe): Anonymous Sign-in, serverseitiges Kontingent, Drosselung, globale Tagesobergrenze
-- **Machbarkeitstests ohne Nutzer-Oberfläche:** versteckter Testbildschirm (nur im Entwicklungsmodus sichtbar) verarbeitet Testfotos aus der Galerie (Freistellen auf dem Gerät, KI-Aufgaben über die Edge Function) und exportiert die Ergebnisse als JSON über das Teilen-Menü; ein Skript wertet sie gegen die erwarteten Werte in `tests/eval/` aus.
-  - Umfang: Freistellen (20 Fotos), Fototyp-Erkennung (40), Gruppierung (10 Serien), Größenschilder (30), Pflegeetiketten (20)
+- **Machbarkeitstests ohne Nutzer-Oberfläche:** versteckter Testbildschirm (nur im Entwicklungsmodus sichtbar) verarbeitet Testfotos aus der Galerie (Freistellen und Gesichtserkennung auf dem Gerät, KI-Aufgaben über die Edge Function) und exportiert die Ergebnisse als JSON-Datei; ein Skript wertet sie gegen die erwarteten Werte in `tests/eval/` aus.
+  - Umfang: Freistellen (20 Fotos), Fototyp-Erkennung (40), Gruppierung (10 Serien), Größenschilder (30), Pflegeetiketten (20), Spiegel-Selfies (50 Fotos gegen ca. 40 Teile)
 - Kosten pro Aufgabe mit echten Aufrufen messen
 - Missbrauchstest: Aufruf ohne gültiges Gerätekonto wird abgelehnt; Kontingent, Drosselung und Tagesobergrenze greifen
-- **Abnahme:** Freistellen: ≥ 80 % der Fotos brauchbar (Urteil des Entwicklers), höchstens 6 s pro Foto auf dem eigenen iPhone; Fototyp ≥ 95 %; Gruppierung ≥ 95 %; Größenschild ≥ 90 %; Pflegesymbole ≥ 80 %; Missbrauchstest bestanden. **Wird ein Wert nicht erreicht:** anhalten, Ergebnisse vorlegen, Entscheidung einholen (Rückfall Freistellen: Untergrund-Verfahren oder Originalfoto).
+- **Abnahme:** Freistellen: ≥ 80 % der Fotos brauchbar (Urteil des Entwicklers), höchstens 6 s pro Foto auf dem eigenen iPhone; Fototyp ≥ 95 %; Gruppierung ≥ 95 %; Größenschild ≥ 90 %; Pflegesymbole ≥ 80 %; Spiegel-Selfie: jedes Gesicht verpixelt (0 Ausreißer) und richtiges Teil unter den Top 3 in ≥ 80 %; Missbrauchstest bestanden. **Wird ein Wert nicht erreicht:** anhalten, Ergebnisse vorlegen, Entscheidung einholen (Rückfall Freistellen: Untergrund-Verfahren oder Originalfoto; Rückfall Selfie: zurück nach Phase 8).
 
 #### Phase 3 – Kamera und Erfassung
 - K01–K09 in der Prototyp-Variante (Abschnitt 7.10), K10 über die Zwischenablage, K29 (Datenschutz-Übersicht, KI abschaltbar)
@@ -607,29 +615,32 @@ Was im Prototyp fehlt oder anders ist, steht in Abschnitt 7.10.
 - **Abnahme:** 10 Teile mit Etiketten in unter 8 Minuten erfasst; jedes Teil in höchstens 3 Tipps bestätigt; keine Formularansicht im Normalablauf; App funktioniert mit abgeschalteter KI (Bildauswahl); Offline-Aufträge laufen bei Netz nach; Export enthält alle Daten und Fotos.
 
 #### Phase 4 – Heute und Outfit-Engine
-- K11–K20, K24 (Wäsche automatisch); Vorabend-Benachrichtigung als lokale Benachrichtigung
-- **Abnahme:** Bei 5 °C und Regen weder Sandalen noch Wildleder; Termin "Vorstellungsgespräch" ergibt formelles Outfit; Teile in der Wäsche erscheinen nicht; Teil tauschen ändert nur dieses Teil; Vorabend-Outfit erscheint morgens unverändert; höchstens 1 Benachrichtigung und 1 Hinweiskarte pro Tag; Vorschlag auch offline.
+- K11–K20, K24 (Wäsche automatisch); Anlass per Antippen statt Kalender
+- Vorabend-Benachrichtigung per **Web-Push** (Supabase: Abo speichern, geplanter Versand zur gewählten Uhrzeit)
+- Service Worker: App startet offline
+- **Abnahme:** Bei 5 °C und Regen weder Sandalen noch Wildleder; Termin "Vorstellungsgespräch" ergibt formelles Outfit; Teile in der Wäsche erscheinen nicht; Teil tauschen ändert nur dieses Teil; Vorabend-Outfit erscheint morgens unverändert; höchstens 1 Benachrichtigung und 1 Hinweiskarte pro Tag; Vorabend-Push kommt auf dem iPhone pünktlich an (± 5 Minuten); Vorschlag auch offline.
 
 #### Phase 5 – Schrank
 - K21–K23, K25
 - **Abnahme:** Suche "blaue Jeans" findet passende Teile; jeder Wert in der Teil-Ansicht in einem Tipp änderbar; Größenprofil pro Marke korrekt nach 3 Teilen derselben Marke; Anzeigentext enthält Marke, Größe, Material, Zustand und wird kopiert.
 
-#### Phase 6 – Kaufcheck und Farbtyp
-- K27, K28 (Farbtyp komplett auf dem Gerät, Pixel werden in JavaScript aus einem verkleinerten Bild gelesen)
-- **Abnahme:** Kaufcheck-Ergebnis in unter 10 s; Farbtyp in unter 2 Minuten; kein Farbtyp-Selfie verlässt das Gerät (Prüfung per Netzwerk-Protokoll der App); Palette beeinflusst Vorschläge und Kaufcheck.
+#### Phase 6 – Spiegel-Selfie, Kaufcheck und Farbtyp
+- K26 (nur wenn der Machbarkeitstest in Phase 2 bestanden ist), K27, K28 (Farbtyp komplett auf dem Gerät, Pixel per Canvas)
+- **Abnahme:** Spiegel-Selfie in höchstens 2 Tipps eingetragen, knappe Treffer werden immer nachgefragt, kein unverpixeltes Gesicht erreicht den Server (Netzwerk-Protokoll); Kaufcheck-Ergebnis in unter 10 s; Farbtyp in unter 2 Minuten; kein Farbtyp-Selfie verlässt das Gerät (Prüfung per Netzwerk-Protokoll der App); Palette beeinflusst Vorschläge und Kaufcheck.
 - ➜ **Meilenstein: Store-Entscheidung.** Mindestens 4 Wochen Eigennutzung, danach Nutzertest mit 5 Personen. Ergebnis ("Store ja/nein", was fehlt) in `docs/ENTSCHEIDUNGEN.md`. Bei "nein" endet der Plan hier oder wird überarbeitet.
 
 ### Teil B – Store-Vorbereitung (nur bei "Store ja")
 
-#### Phase 7 – Native Basis
+#### Phase 7 – Native Basis und Umzug aus der Webapp
 - Apple-Entwicklerkonto, Android-Testgerät, EAS-Entwicklungs-Builds (Abschnitt 16, Teil B)
+- Native Umsetzungen hinter den Schnittstellen in `src/services/` (Speicher, Kamera, Benachrichtigungen, Kalender); Import der Webapp-Exportdatei
 - Expo-Modul `native-vision` (Freistellen über Apple Vision / ML Kit, Texterkennung, Gesichter, Rechtecke) auf beiden Plattformen; lokale Fototyp-Vorentscheidung (Abschnitt 7.2); prüfen, ob es U²-Net ersetzt
 - Echtheitsprüfung (Abschnitt 7.9): Edge Function `attest`, App Attest, Play Integrity, weiche Regel
 - K10 über das Teilen-Menü des Systems; react-native-vision-camera falls Kamera-Tempo es nötig macht
-- **Abnahme:** Entwicklungs-Build auf iPhone und Android; Machbarkeitswerte aus Phase 2 auf beiden Plattformen erreicht; Echtheitsprüfung funktioniert, fehlgeschlagene Prüfung führt zum kleinen Kontingent.
+- **Abnahme:** Entwicklungs-Build auf iPhone und Android; Export aus der Webapp vollständig importiert; Machbarkeitswerte aus Phase 2 auf beiden Plattformen erreicht; Echtheitsprüfung funktioniert, fehlgeschlagene Prüfung führt zum kleinen Kontingent.
 
-#### Phase 8 – Spiegel-Selfie
-- K26 inkl. Machbarkeitstest (50 Selfies gegen ca. 40 Teile)
+#### Phase 8 – Spiegel-Selfie nativ
+- K26 mit `native-vision` (Gesichtserkennung nativ); falls der Webapp-Test in Phase 2 scheiterte: Machbarkeitstest (50 Selfies gegen ca. 40 Teile) hier
 - **Abnahme:** richtiges Teil unter den Top 3 in ≥ 80 % (sonst anhalten und Entscheidung einholen); Selfie in höchstens 2 Tipps eingetragen; knappe Treffer werden immer nachgefragt; kein unverpixeltes Gesicht erreicht den Server (Netzwerk-Mitschnitt).
 
 #### Phase 9 – Sicherung, Import, Konto
@@ -683,7 +694,9 @@ Reihenfolge innerhalb der Pakete nach Beta-Feedback. **Gemeinsame Abnahme für j
 | KI-Anbieter ändert Preise | Schnittstelle, zweiter Anbieter, Kontingente |
 | Missbrauch der KI-Schnittstelle (Kostenfalle) | Gerätekonto, Echtheitsprüfung, serverseitiges Kontingent, Drosselung, globale Tagesobergrenze (Abschnitt 7.9) |
 | Datenschutzverstoß durch Personenfotos | Verpixeln auf dem Gerät, keine Speicherung, Prüfung per Netzwerk-Mitschnitt |
-| Expo Go unterstützt nur das aktuelle SDK | Projekt zeitnah auf neues SDK heben; Export früh (Phase 3) |
+| Safari löscht Webapp-Daten | Home-Bildschirm-App, dauerhaften Speicher anfragen, Export früh (Phase 3) |
+| Web-Push auf dem iPhone unzuverlässig | Test in Phase 4; Rückfall: Outfit für morgen nur in der App |
+| Umzug Webapp → Store-App aufwendiger als gedacht | Plattform-Code nur hinter `src/services/`; Export/Import-Format früh festlegen |
 | Freistellen mit U²-Net zu langsam oder zu schlecht | Machbarkeitstest Phase 2; Rückfall Untergrund-Verfahren oder Originalfoto |
 | Wenig Zeit des Entwicklers | Prototyp zuerst, Store nur bei Erfolg, Launch nur mit Kern, Erweiterungen einzeln danach, keine zweite App parallel |
 
@@ -695,7 +708,7 @@ Reihenfolge innerhalb der Pakete nach Beta-Feedback. **Gemeinsame Abnahme für j
 - [ ] App-Name nach Markenrecherche
 - [ ] Gratis-Kontingent KI und Preise nach Beta
 - [ ] Reihenfolge der Erweiterungs-Pakete nach Beta-Feedback
-- [x] Ob Android ab Phase 0 gleichwertig getestet wird → **Nein:** Prototyp nur iPhone in Expo Go; Android gleichwertig ab Teil B (siehe `docs/ENTSCHEIDUNGEN.md`)
+- [x] Ob Android ab Phase 0 gleichwertig getestet wird → **Nein:** Prototyp als Webapp, getestet auf dem iPhone; Android gleichwertig ab Teil B (siehe `docs/ENTSCHEIDUNGEN.md`)
 - [ ] **Store ja/nein** nach dem Prototyp (Meilenstein nach Phase 6)
 
 ---

@@ -1,0 +1,22 @@
+# Webapp (Teil A): Netlify baut bei jedem Push. main = deine Home-Bildschirm-App,
+# andere Branches bekommen eine eigene Vorschau-Adresse.
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  EXPO_NO_TELEMETRY = "1"
+
+# Alle Pfade an die App geben (Expo Router im Browser).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(self), geolocation=(self), microphone=()"

@@ -3,9 +3,9 @@
 Manuelle Prüfungen pro Phase auf iPhone und Android. Format: Prüfung – iOS – Android – Datum.
 
 ## Phase 0
-Teil A (Prototyp): nur iPhone in Expo Go.
+Teil A (Prototyp): Webapp, getestet auf dem iPhone (Safari, Home-Bildschirm).
 
 | Prüfung | iOS | Android | Datum |
 |---|---|---|---|
-| App öffnet sich per Link in Expo Go | [ ] | – | |
+| Webapp öffnet sich und lässt sich zum Home-Bildschirm hinzufügen | [ ] | – | |
 | Edge Function "hallo" aus der App erreichbar | [ ] | – | |
