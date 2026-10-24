@@ -112,7 +112,8 @@
     "sucheBeschriftung": "Schrank durchsuchen",
     "alle": "Alle",
     "nichtsGefunden": "Nichts gefunden.",
-    "anzahl": "{anzahl} Teile"
+    "anzahl": "{anzahl} Teile",
+    "anzahlEins": "1 Teil"
   },
   "kategorien": {
     "oberteil": "Oberteile",

@@ -1,6 +1,18 @@
 import { create } from 'zustand';
 
 import type { Hinweis } from '../core/hints/warteschlange';
+import { tagVon } from '../core/zeit/datum';
+import {
+  alleGewaschen,
+  anzahlTeile,
+  ladeTeile,
+  leereSchrank,
+  loescheEintrag,
+  loescheTeile,
+  speichereTeil,
+  trageEin,
+} from '../db/repositories/teile';
+import type { Datenbank } from '../db/typen';
 import { t } from '../i18n';
 import {
   BEISPIEL_OUTFITS,
@@ -45,6 +57,9 @@ type Zustand = {
   tausche: (slot: Slot) => void;
   anderes: () => void;
   anziehen: () => void;
+  trageSelfieEin: (ids: string[]) => void;
+  verbinde: (db: Datenbank) => Promise<void>;
+  setzeSchrankZurueck: () => Promise<void>;
   legeMorgenFest: (outfit: Outfit) => void;
   fuegeHinzu: (neue: Teil[]) => void;
   entferne: (ids: string[]) => void;
@@ -57,8 +72,11 @@ type Zustand = {
   schliesseLeiste: () => void;
 };
 
+const beispielTeile = () =>
+  BEISPIEL_TEILE.map((t) => ({ ...t, inWaesche: ['t2', 't9'].includes(t.id) }));
+
 const anfang = () => ({
-  teile: BEISPIEL_TEILE.map((t) => ({ ...t, inWaesche: ['t2', 't9'].includes(t.id) })),
+  teile: beispielTeile(),
   outfitIndex: 0,
   tausch: {},
   angezogen: false,
@@ -70,6 +88,40 @@ const anfang = () => ({
 });
 
 let leistenZaehler = 0;
+let eintragZaehler = 0;
+
+/** Verbundene Datenbank; ohne sie (Tests) arbeitet der Prototyp nur im Speicher. */
+let db: Datenbank | null = null;
+
+/**
+ * Alle Datenbank-Arbeiten nacheinander: Im Browser teilen sich alle eine Verbindung,
+ * gleichzeitige Transaktionen würden sich sonst vermischen.
+ */
+let reihe: Promise<unknown> = Promise.resolve();
+export function inReihe<T>(arbeit: () => Promise<T>): Promise<T> {
+  const ergebnis = reihe.then(arbeit, arbeit);
+  reihe = ergebnis.catch(() => undefined);
+  return ergebnis;
+}
+
+/** Schreibt im Hintergrund und lädt danach den Schrank neu, damit Anzeige und Datenbank gleich sind. */
+function speichern(arbeit: (db: Datenbank) => Promise<void>) {
+  if (!db) return;
+  const verbunden = db;
+  inReihe(async () => {
+    await arbeit(verbunden);
+    usePrototyp.setState({ teile: await ladeTeile(verbunden, tagVon(new Date())) });
+  }).catch((fehler) => console.error('Speichern fehlgeschlagen', fehler));
+}
+
+async function fuelleUndLade(verbunden: Datenbank): Promise<Teil[]> {
+  if ((await anzahlTeile(verbunden)) === 0) {
+    // Gleicher Zeitstempel für alle, damit die Reihenfolge der Beispieldaten erhalten bleibt.
+    const jetzt = new Date();
+    for (const teil of beispielTeile()) await speichereTeil(verbunden, teil, jetzt);
+  }
+  return ladeTeile(verbunden, tagVon(new Date()));
+}
 
 export const usePrototyp = create<Zustand>()((set, get) => ({
   ...anfang(),
@@ -88,20 +140,54 @@ export const usePrototyp = create<Zustand>()((set, get) => ({
   anziehen: () => {
     const ids = Object.values(get().outfit());
     const vorher = get().teile;
+    const eintrag = `e-${Date.now()}-${++eintragZaehler}`;
     set((s) => ({
       angezogen: true,
       teile: s.teile.map((t) =>
         ids.includes(t.id) ? { ...t, getragen: t.getragen + 1, zuletzt: 'heute' } : t,
       ),
     }));
-    get().zeigeLeiste(t('heute.angezogen'), () => set({ angezogen: false, teile: vorher }));
+    speichern((d) => trageEin(d, eintrag, ids, tagVon(new Date()), 'wear_button'));
+    get().zeigeLeiste(t('heute.angezogen'), () => {
+      set({ angezogen: false, teile: vorher });
+      speichern((d) => loescheEintrag(d, eintrag));
+    });
+  },
+  trageSelfieEin: (ids) => {
+    const eintrag = `e-${Date.now()}-${++eintragZaehler}`;
+    speichern((d) => trageEin(d, eintrag, ids, tagVon(new Date()), 'selfie'));
+    get().zeigeLeiste(t('selfie.gespeichert'), () => speichern((d) => loescheEintrag(d, eintrag)));
+  },
+  verbinde: async (neueDb) => {
+    db = neueDb;
+    set({ teile: await inReihe(() => fuelleUndLade(neueDb)) });
+  },
+  setzeSchrankZurueck: async () => {
+    if (!db) {
+      set({ teile: beispielTeile() });
+      return;
+    }
+    const verbunden = db;
+    const teile = await inReihe(async () => {
+      await leereSchrank(verbunden);
+      return fuelleUndLade(verbunden);
+    });
+    set({ teile });
   },
   legeMorgenFest: (outfit) => {
     set({ morgenFest: outfit });
     get().zeigeLeiste(t('abend.festgelegt'), () => set({ morgenFest: null }));
   },
-  fuegeHinzu: (neue) => set((s) => ({ teile: [...neue, ...s.teile] })),
-  entferne: (ids) => set((s) => ({ teile: s.teile.filter((t) => !ids.includes(t.id)) })),
+  fuegeHinzu: (neue) => {
+    set((s) => ({ teile: [...neue, ...s.teile] }));
+    speichern(async (d) => {
+      for (const teil of neue) await speichereTeil(d, teil);
+    });
+  },
+  entferne: (ids) => {
+    set((s) => ({ teile: s.teile.filter((t) => !ids.includes(t.id)) }));
+    speichern((d) => loescheTeile(d, ids));
+  },
   kameraFoto: (typ) => set((s) => ({ kameraFotos: [...s.kameraFotos, typ] })),
   kameraLeeren: () => set({ kameraFotos: [] }),
   waescheFertig: () => {
@@ -109,9 +195,15 @@ export const usePrototyp = create<Zustand>()((set, get) => ({
       waescheErledigt: true,
       teile: s.teile.map((t) => ({ ...t, inWaesche: false })),
     }));
+    speichern(alleGewaschen);
   },
   mantelFertig: () => set({ mantelErledigt: true }),
-  setzeSzenario: (szenario) => set({ ...anfang(), szenario }),
+  // Teile bleiben; die Testleitung setzt den Schrank mit setzeSchrankZurueck zurück.
+  setzeSzenario: (szenario) => {
+    const { teile, ...rest } = anfang();
+    void teile;
+    set({ ...rest, szenario });
+  },
   zeigeLeiste: (text, rueckgaengig) =>
     set({ leiste: { text, rueckgaengig, id: ++leistenZaehler } }),
   schliesseLeiste: () => set({ leiste: null }),

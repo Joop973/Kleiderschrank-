@@ -68,7 +68,11 @@ export default function Schrank() {
           );
         })}
       </ScrollView>
-      <Text leise>{t('schrank.anzahl', { anzahl: gefiltert.length })}</Text>
+      <Text leise>
+        {gefiltert.length === 1
+          ? t('schrank.anzahlEins')
+          : t('schrank.anzahl', { anzahl: gefiltert.length })}
+      </Text>
       {gefiltert.length === 0 ? <Text>{t('schrank.nichtsGefunden')}</Text> : null}
       <View style={styles.raster}>
         {gefiltert.map((teil) => (

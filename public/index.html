@@ -30,5 +30,13 @@
   <body>
     <noscript>Bitte JavaScript aktivieren, um die App zu nutzen.</noscript>
     <div id="root"></div>
+    <script>
+      // Offline-Start (public/sw.js)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>

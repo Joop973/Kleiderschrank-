@@ -61,7 +61,7 @@ let fehlgeschlagen = 0;
   const aufgabe = async (text) => {
     await p.goto(URL + '/mehr/testleitung', { waitUntil: 'networkidle' });
     await p.getByRole('button', { name: text }).first().click();
-    await p.waitForTimeout(600);
+    await p.waitForTimeout(1200);
     tipps = 0;
   };
 
@@ -206,10 +206,11 @@ let fehlgeschlagen = 0;
       throw new Error('Bildschirm nach Ausschalten noch da');
   });
   await ablauf('Schrank-Suche', async () => {
+    await aufgabe('vorgeschlagene Outfit');
     await p.goto(URL + '/schrank', { waitUntil: 'networkidle' });
     await p.getByRole('textbox').fill('blaue Jeans');
     await p.waitForTimeout(300);
-    await sieht('1 Teile');
+    await sieht('1 Teil');
     await bild('21-suche');
   });
   await ablauf('Dunkelmodus bleibt nach Neuladen', async () => {
@@ -225,6 +226,32 @@ let fehlgeschlagen = 0;
     await p.goto(URL + '/', { waitUntil: 'networkidle' });
     await p.waitForTimeout(800);
     await bild('22-dunkel');
+  });
+  await ablauf('Neues Teil bleibt nach Neuladen', async () => {
+    await aufgabe('neue Jeans');
+    await tippe('Fotografieren');
+    await tippe('Foto machen');
+    await tippe('Ja, in den Schrank');
+    await sieht('17 Teile');
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForTimeout(800);
+    await sieht('17 Teile');
+  });
+  await ablauf('Anziehen bleibt nach Neuladen', async () => {
+    await aufgabe('vorgeschlagene Outfit');
+    await tippe('Anziehen');
+    await p.waitForTimeout(500);
+    await p.goto(URL + '/teil/t1', { waitUntil: 'networkidle' });
+    await sieht('23-mal getragen');
+  });
+  await ablauf('Start ohne Netz', async () => {
+    await p.goto(URL + '/', { waitUntil: 'networkidle' });
+    await p.waitForTimeout(1500);
+    await c.setOffline(true);
+    await p.reload({ waitUntil: 'load' });
+    await p.waitForTimeout(1500);
+    await sieht('Anziehen');
+    await c.setOffline(false);
   });
   console.log('Fehler im Browser:', fehler);
   await b.close();

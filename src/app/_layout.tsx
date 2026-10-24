@@ -45,6 +45,16 @@ function GespeichertesThema({ children }: PropsWithChildren) {
   );
 }
 
+/** Verbindet den Prototyp mit der Datenbank; beim ersten Start kommen die Beispieldaten hinein. */
+function SchrankLaden() {
+  const db = useDatenbank();
+  const verbinde = usePrototyp((s) => s.verbinde);
+  useEffect(() => {
+    verbinde(db).catch((fehler) => console.error('Schrank laden fehlgeschlagen', fehler));
+  }, [db, verbinde]);
+  return null;
+}
+
 function Rahmen() {
   const { farben, dunkel, bewegung } = useThema();
   const leiste = usePrototyp((s) => s.leiste);
@@ -104,6 +114,7 @@ export default function Layout() {
     <DatenbankProvider fehlerAnzeige={() => <DatenbankFehler />}>
       <GespeichertesThema>
         <ErweiterungsProvider alle={ALLE_ERWEITERUNGEN}>
+          <SchrankLaden />
           <Rahmen />
         </ErweiterungsProvider>
       </GespeichertesThema>
