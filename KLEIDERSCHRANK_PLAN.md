@@ -601,6 +601,7 @@ Was im Prototyp fehlt oder anders ist, steht in Abschnitt 7.10.
 - **Abnahme:** Nutzertest mit 5 Personen: jeder Ablauf wird ohne Erklärung in der Soll-Tippzahl geschafft (sonst Prototyp vereinfachen); Test-Erweiterung lässt sich ein- und ausschalten, ohne dass Kern-Tests sich ändern; VoiceOver liest alle Knöpfe.
 
 #### Phase 2 – Machbarkeitstests (Freistellen und KI)
+*Stand: Teil auf dem Gerät (Freistellen, Gesichter verpixeln) vorgezogen und gebaut; KI-Teil wartet auf Supabase und Mistral (siehe `docs/FORTSCHRITT.md`).*
 - **Freistellen auf dem Gerät** (Abschnitt 7.10): U²-Net (u2netp, Apache-2.0) mit onnxruntime-web im Browser
 - **Spiegel-Selfie auf dem Gerät:** Gesichtserkennung und Verpixeln im Browser; Edge-Function-Aufgabe `outfit_photo_garments`; Zuordnung (Abschnitt 7.3)
 - Edge Function `ai-vision` mit Mistral (Kleidungsstück inkl. Fototyp, Größenschild als Bild, Pflegeetikett), Zod-Schemas

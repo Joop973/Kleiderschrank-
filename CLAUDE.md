@@ -23,7 +23,8 @@ Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 - Abläufe im Browser: npm run build:web && npm run test:browser (Playwright, zählt Tipps)
 - KI-Testsatz: npm run eval
 - Supabase-Migration: supabase migration new <name>
-- Web-Build: npm run build:web (Netlify baut automatisch; Branches bekommen Vorschau-Adressen)
+- Web-Build: npm run build:web (lädt vorher Bild-Modelle nach public/vision; Netlify baut automatisch)
+- Bild-Modelle allein: NODE_USE_ENV_PROXY=1 npm run vision (in der Cloud-Sitzung nötig wegen Proxy)
 - Abhängigkeiten: EXPO_OFFLINE=1 npx expo install <paket> (expo.dev ist aus der Cloud-Sitzung gesperrt)
 
 ## Regeln

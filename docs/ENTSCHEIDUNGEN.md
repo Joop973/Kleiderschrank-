@@ -85,6 +85,19 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 - Auftrag des Entwicklers: Pull Requests nach grüner Prüfung ohne Konflikte von Claude selbst mergen.
 - Folge: Jeder Merge ändert sofort die Webapp auf dem iPhone (Netlify baut main). Halbfertige Phasen können so sichtbar werden; Abnahmen bleiben trotzdem beim Entwickler.
 
+## 2026-10-24 – Phase 2 teilweise vorgezogen (auf dem Gerät)
+- Auftrag des Entwicklers, obwohl Phase 1 noch nicht abgenommen ist.
+- Gebaut: Freistellen mit U²-Net klein (u2netp, Apache-2.0) über onnxruntime-web; Gesichter mit MediaPipe Face Detector (Apache-2.0), Rückfall über MediaPipe Pose (Kopf aus Körperhaltung), weil Gesichter in Spiegel-Selfies oft klein sind. Ohne Fund: Foto wird nicht hochgeladen.
+- Modelle und Laufzeiten liegen nicht im Repository; `npm run vision` (Teil von `build:web`) lädt sie mit SHA-256-Prüfung nach `public/vision`. Umfang etwa 48 MB, geladen nur beim Machbarkeitstest.
+- Noch offen: KI-Aufgaben (Edge Function, Mistral) brauchen Supabase und Mistral-Konto.
+
+## 2026-10-24 – Prototyp speichert Teile in der Datenbank
+- Migration 2 legt items und Nebentabellen nach Plan 8 an. Beispieldaten kommen beim ersten Start hinein; "Testleitung" setzt sie zurück.
+- Datenbank-Arbeiten laufen nacheinander (eine Verbindung im Browser, sonst vermischen sich Transaktionen).
+
+## 2026-10-24 – Netlify-Projekt "schrank-app"
+- Über die Netlify-Verbindung angelegt. Hochladen aus der Cloud-Sitzung scheitert an der Netzwerkregel (api.netlify.com gesperrt); deshalb baut Netlify direkt aus GitHub, sobald der Entwickler das Repository verbindet.
+
 ## Offen
 - Geldmodell (vorläufig Freemium)
 - App-Name nach Markenrecherche

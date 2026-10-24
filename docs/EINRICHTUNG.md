@@ -24,21 +24,21 @@ Am Handy: github.com im Browser, ggf. Desktop-Ansicht.
 Danach: **Actions** → **Server (Supabase)** → **Run workflow**. Der Lauf muss grün werden.
 
 ## 3. Netlify (Webapp)
-1. Auf netlify.com mit **GitHub** anmelden.
-2. **Add new project** → **Import an existing project** → **GitHub** → Repository `Kleiderschrank-` wählen (ggf. Netlify den Zugriff auf das Repository erlauben).
-3. **Branch to deploy:** `main`. Build-Einstellungen nicht ändern (kommen aus `netlify.toml`).
-4. **Environment variables** hinzufügen:
+Das Projekt **schrank-app** ist schon angelegt (Adresse: https://schrank-app.netlify.app). Es fehlt nur die Verbindung zu GitHub:
+1. app.netlify.com öffnen (mit GitHub angemeldet) → **Projects** → **schrank-app**.
+2. **Project configuration** → **Build & deploy** → **Continuous deployment** → **Link repository** (bzw. "Link to Git").
+3. **GitHub** → Repository `Kleiderschrank-` wählen (ggf. Netlify den Zugriff erlauben).
+4. **Branch to deploy:** `main`. Build-Einstellungen nicht ändern (kommen aus `netlify.toml`). **Deploy** drücken.
+5. Der erste Build dauert einige Minuten (lädt auch die Bild-Modelle, etwa 15 MB).
+6. Optional, sobald Supabase eingerichtet ist: **Project configuration** → **Environment variables**:
    | Name | Wert |
    |---|---|
    | `EXPO_PUBLIC_SUPABASE_URL` | Project URL aus 1.2 |
    | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key aus 1.2 |
-5. **Deploy** drücken.
-6. Projekt → **Project configuration** → **Build & deploy** → **Branches and deploy contexts**: **Branch deploys: All** und **Deploy Previews: an**. Dann bekommt jeder Arbeitsstand eine eigene Vorschau-Adresse.
-7. Optional: Projektname ändern (z. B. `mein-kleiderschrank`), dann lautet die Adresse `mein-kleiderschrank.netlify.app`.
+   Danach **Deploys** → **Trigger deploy**. Ohne diese Werte läuft die App trotzdem, nur der Server-Test in "Mehr" meldet "noch nicht eingerichtet".
 
 ## 4. Auf dem iPhone
-1. Den Pull Request von Claude in der GitHub-App mergen (sonst ist `main` noch leer).
-2. Die Netlify-Adresse in **Safari** öffnen.
+1. https://schrank-app.netlify.app in **Safari** öffnen.
 3. Teilen-Symbol → **Zum Home-Bildschirm** → **Hinzufügen**.
 4. App vom Home-Bildschirm starten, oben rechts auf **Mehr** (drei Punkte) tippen. Ganz unten sollte stehen: **Server: Server antwortet.**
 
