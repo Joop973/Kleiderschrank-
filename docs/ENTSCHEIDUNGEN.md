@@ -81,6 +81,10 @@ Format: Datum – Entscheidung – Begründung – Alternativen
 - **Spiegel-Selfie, knapper Treffer:** Plan sagt "knappe Treffer werden immer nachgefragt". Prototyp: bester Treffer ist vorausgewählt, hervorgehoben und die Alternative sichtbar; "Ja" ohne zusätzlichen Tipp möglich. Sonst 4 statt 3 Tipps.
 - Entscheidung durch den Entwickler nach dem Nutzertest.
 
+## 2026-10-24 – Claude mergt Pull Requests selbst
+- Auftrag des Entwicklers: Pull Requests nach grüner Prüfung ohne Konflikte von Claude selbst mergen.
+- Folge: Jeder Merge ändert sofort die Webapp auf dem iPhone (Netlify baut main). Halbfertige Phasen können so sichtbar werden; Abnahmen bleiben trotzdem beim Entwickler.
+
 ## Offen
 - Geldmodell (vorläufig Freemium)
 - App-Name nach Markenrecherche

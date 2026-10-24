@@ -31,6 +31,7 @@ Mistral über Edge Functions, Bright Sky (Wetter), RevenueCat, Sentry (EU).
 - Nur an der aktuellen Phase arbeiten, Abnahmekriterien abhaken.
 - Teil A: Code muss im Browser laufen; Plattform-Code nur hinter src/services/, damit Teil B nur Umsetzungen tauscht.
 - Neue Stände über Pull Request nach main; main = Webapp des Entwicklers (Netlify).
+- Claude mergt eigene Pull Requests selbst, sobald die Prüfung auf GitHub grün ist und keine Konflikte bestehen (Auftrag des Entwicklers, docs/ENTSCHEIDUNGEN.md). Nie mit roter Prüfung mergen.
 - Branches: phase-XX-name; gibt die Claude-Code-Sitzung einen Branch vor, gilt dieser.
 - Commit-Nachrichten auf Deutsch, kleine Commits.
 - Einfachheits-Regeln (Plan Abschnitt 2) sind Abnahmekriterien: 5 Sekunden, 1 Hauptaktion,
