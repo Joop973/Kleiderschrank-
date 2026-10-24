@@ -1,0 +1,262 @@
+{
+  "allgemein": {
+    "zurueck": "Zurück",
+    "schliessen": "Schließen",
+    "rueckgaengig": "Rückgängig",
+    "fertig": "Fertig",
+    "weiter": "Weiter",
+    "wegtippen": "Hinweis ausblenden",
+    "aendernHinweis": "Tippen, um diesen Wert zu ändern",
+    "erkannt": "Automatisch erkannt. Tippe auf einen Wert, um ihn zu ändern.",
+    "kommtBald": "Kommt in einer späteren Version."
+  },
+  "tabs": {
+    "heute": "Heute",
+    "kamera": "Fotografieren",
+    "schrank": "Schrank"
+  },
+  "heute": {
+    "titel": "Heute",
+    "mehr": "Mehr",
+    "anziehen": "Anziehen",
+    "anziehenHinweis": "Trägt dieses Outfit für heute ein",
+    "anderes": "Anderes",
+    "anderesBeschriftung": "Anderes Outfit zeigen",
+    "teilTauschen": "{teil}. Tippen, um nur dieses Teil zu tauschen",
+    "angezogen": "Eingetragen: heute getragen.",
+    "angezogenStatus": "Heute angezogen.",
+    "morgenFest": "Für morgen festgelegt.",
+    "begruendungRegen": "Passt zu 14 °C und Regen",
+    "begruendungTrocken": "Passt zu 14 °C, trocken",
+    "mitnehmenJacke": "Jacke mitnehmen ab 17 Uhr",
+    "mitnehmenSchirm": "Schirm einpacken",
+    "begruendungMehr": "Warum dieses Outfit?",
+    "begruendungDetails": "Leichte Schichten für 11 bis 16 °C. Kein Wildleder wegen Regen. Die Farben passen zueinander. Diese Teile hattest du länger nicht an.",
+    "zeigeTauschen": "Tauschen: {teil}",
+    "server": "Server"
+  },
+  "hinweise": {
+    "waesche": "12 Teile in der Wäsche. Waschgänge ansehen?",
+    "waescheAktion": "Waschgänge ansehen",
+    "verkaufen": "Seit 8 Monaten nicht getragen: {teil}. Verkaufen, spenden oder behalten?",
+    "verkaufenAktion": "Verkaufen",
+    "spendenAktion": "Spenden",
+    "behaltenAktion": "Behalten",
+    "behalten": "Gut, du wirst nicht mehr danach gefragt.",
+    "gespendet": "Als gespendet markiert.",
+    "farbtyp": "Willst du wissen, welche Farben dir stehen?",
+    "farbtypAktion": "Ja, zeig mir"
+  },
+  "abend": {
+    "benachrichtigungApp": "Schrank",
+    "benachrichtigungTitel": "Dein Outfit für morgen",
+    "benachrichtigungText": "Morgen 9 bis 15 °C, ab Mittag Regen.",
+    "titel": "Morgen",
+    "passt": "Passt",
+    "anderes": "Anderes",
+    "festgelegt": "Festgelegt. Morgen früh siehst du genau dieses Outfit."
+  },
+  "kamera": {
+    "titel": "Kamera",
+    "ausloeser": "Foto machen",
+    "galerie": "Aus deinen Fotos wählen",
+    "schliessen": "Kamera schließen",
+    "motivTeil": "Leg das Teil flach hin.",
+    "motivLaden": "Im Laden: Teil von vorne fotografieren.",
+    "motivSelfie": "Spiegel-Selfie: ganzes Outfit ins Bild.",
+    "motivEtikett": "Jetzt das Größenschild",
+    "motivPflege": "Jetzt das Pflegeetikett",
+    "tippEtikett": "Du kannst noch Größenschild und Pflegeetikett fotografieren.",
+    "typTeil": "Kleidungsstück",
+    "typGroesse": "Größenschild",
+    "typPflege": "Pflegeetikett",
+    "typSelfie": "Spiegel-Selfie",
+    "frage": "Stimmt das?",
+    "inDenSchrank": "Ja, in den Schrank",
+    "nurPruefen": "Nur prüfen",
+    "gespeichert": "Im Schrank: {teil}.",
+    "fotoAnzahl": "{anzahl} Fotos zu diesem Teil"
+  },
+  "werte": {
+    "titel": "Ändern: {wert}",
+    "groesse": "Größe",
+    "farbe": "Farbe"
+  },
+  "galerie": {
+    "titel": "Fotos wählen",
+    "hinzufuegen": "{anzahl} hinzufügen",
+    "nichtsGewaehlt": "Tippe auf Fotos, um sie zu wählen.",
+    "stapel": "Teil {nummer} von {gesamt}",
+    "wischen": "Nach rechts wischen heißt Ja.",
+    "fertig": "{anzahl} Teile im Schrank."
+  },
+  "kaufcheck": {
+    "titel": "Kaufcheck",
+    "teil": "Grauer Strickpullover, 89 €",
+    "passtZu": "Passt zu 9 Outfits",
+    "aehnlich": "Ähnlich: deine graue Strickjacke",
+    "farbe": "Farbe steht dir",
+    "preis": "Etwa 3,70 € pro Tragen, wenn du ihn 2-mal im Monat ein Jahr lang trägst.",
+    "fertig": "Fertig"
+  },
+  "selfie": {
+    "titel": "Heute getragen",
+    "verpixelt": "Dein Gesicht wurde auf dem Handy verpixelt.",
+    "knapp": "Welche Schuhe waren es?",
+    "ja": "Ja, eintragen",
+    "gespeichert": "Eingetragen: heute getragen."
+  },
+  "schrank": {
+    "titel": "Schrank",
+    "suche": "Suchen, zum Beispiel blaue Jeans",
+    "sucheBeschriftung": "Schrank durchsuchen",
+    "alle": "Alle",
+    "nichtsGefunden": "Nichts gefunden.",
+    "anzahl": "{anzahl} Teile"
+  },
+  "kategorien": {
+    "oberteil": "Oberteile",
+    "schicht": "Jacken",
+    "unterteil": "Hosen und Röcke",
+    "kleid": "Kleider",
+    "schuhe": "Schuhe",
+    "accessoire": "Accessoires"
+  },
+  "teil": {
+    "groesse": "Größe",
+    "marke": "Marke",
+    "material": "Material",
+    "pflege": "Pflege",
+    "pflegeaufwand": "Pflegeaufwand",
+    "preisProTragen": "Preis pro Tragen",
+    "getragen": "{anzahl}-mal getragen",
+    "zuletzt": "Zuletzt getragen",
+    "waesche": "In der Wäsche",
+    "aufwandWenig": "wenig",
+    "aufwandMittel": "mittel",
+    "aufwandViel": "viel"
+  },
+  "waesche": {
+    "titel": "Wäsche",
+    "einleitung": "So wäschst du alles in 3 Waschgängen:",
+    "gang40Dunkel": "40 °C, dunkle Sachen",
+    "gang30Hell": "30 °C, helle Sachen",
+    "gangHand": "Handwäsche",
+    "fertig": "Fertig gewaschen",
+    "erledigt": "Gewaschen. Alles wieder im Schrank.",
+    "teile": "{anzahl} Teile"
+  },
+  "verkaufen": {
+    "titel": "Verkaufen",
+    "kopiert": "Anzeigentext ist kopiert. Füge ihn in deiner Verkaufs-App ein.",
+    "anzeige": "Hellgrauer Wollmantel von Mango, Größe M, 80 % Wolle, 20 % Polyamid. Wenig getragen, sehr guter Zustand. Nichtraucher-Haushalt.",
+    "teilen": "Fotos teilen",
+    "aehnliche": "Ähnliche Angebote suchen",
+    "verkauft": "Als verkauft markieren"
+  },
+  "farbtyp": {
+    "titel": "Deine Farben",
+    "selfie": "Mach ein Selfie bei Tageslicht. Ein weißes Blatt Papier im Bild hilft.",
+    "ausloeser": "Selfie machen",
+    "haare": "Tippe auf deine Haare.",
+    "augen": "Tippe auf ein Auge.",
+    "regler": "Stimmt das so? Schieb die Regler, bis es passt.",
+    "haut": "Haut: heller oder dunkler",
+    "unterton": "Wirkt deine Haut eher warm oder kühl?",
+    "weissNicht": "Weiß ich nicht",
+    "untertonHilfe": "Halte Silber und Gold an dein Handgelenk. Steht dir Gold besser, eher warm. Steht dir Silber besser, eher kühl.",
+    "haarfarbe": "Haare: heller oder dunkler",
+    "kontrast": "Unterschied Haut zu Haaren: wenig oder viel",
+    "links": "links",
+    "rechts": "rechts",
+    "warm": "warm",
+    "kuehl": "kühl",
+    "hell": "heller",
+    "dunkel": "dunkler",
+    "wenig": "wenig",
+    "viel": "viel",
+    "ergebnis": "Diese Farben stehen dir",
+    "ergebnisHinweis": "Stilberatung, keine Wissenschaft. Dein Selfie bleibt auf deinem Handy.",
+    "farbnamen": "Petrol, Waldgrün, Senfgelb, Rostrot, Kamel, Creme",
+    "fertig": "Fertig"
+  },
+  "mehr": {
+    "titel": "Mehr",
+    "erweiterungen": "Erweiterungen",
+    "einstellungen": "Einstellungen",
+    "hilfe": "Hilfe",
+    "datenschutz": "Datenschutz",
+    "testleitung": "Testleitung (nur für Nutzertests)"
+  },
+  "erweiterungen": {
+    "titel": "Erweiterungen",
+    "einleitung": "Mehr Funktionen, wenn du sie willst. Alles ist aus, bis du es einschaltest.",
+    "aus": "Aus",
+    "an": "An",
+    "kostenlos": "Kostenlos",
+    "zustimmung": "Darf diese Erweiterung dich erinnern?",
+    "e00Name": "Test-Erweiterung",
+    "e00Beschreibung": "Zeigt eine Beispiel-Hinweiskarte und einen eigenen Bildschirm.",
+    "e00Hinweis": "Die Test-Erweiterung ist eingeschaltet.",
+    "e00Bildschirm": "Test-Bildschirm",
+    "e00Text": "Diesen Bildschirm bringt die Test-Erweiterung mit. Schaltest du sie aus, verschwindet er."
+  },
+  "einstellungen": {
+    "titel": "Einstellungen",
+    "uhrzeit": "Outfit für morgen",
+    "uhrzeitWert": "um {uhrzeit} Uhr",
+    "benachrichtigungen": "Benachrichtigungen",
+    "wohnort": "Wetter für",
+    "wohnortWert": "deinen Standort",
+    "kalender": "Termine berücksichtigen",
+    "kalenderWert": "In der Webapp nicht möglich",
+    "ki": "Erkennung mit KI",
+    "erscheinungsbild": "Erscheinungsbild",
+    "system": "Wie Handy",
+    "hell": "Hell",
+    "dunkel": "Dunkel",
+    "reizarm": "Reizarm",
+    "export": "Alles exportieren"
+  },
+  "datenschutz": {
+    "titel": "Datenschutz",
+    "text1": "Deine Fotos und Daten bleiben auf deinem Handy. Du brauchst kein Konto.",
+    "text2": "Für die Erkennung schickt die App ein verkleinertes Foto an eine KI in der EU. Dort wird nichts gespeichert. Gesichter werden vorher auf deinem Handy verpixelt.",
+    "text3": "Dein Farbtyp-Selfie verlässt nie dein Handy.",
+    "text4": "Keine Werbung. Kein Verkauf von Daten.",
+    "prototyp": "Dies ist ein Prototyp mit Beispieldaten."
+  },
+  "hilfe": {
+    "titel": "Hilfe",
+    "heute": "Heute: Dein Outfit für den Tag. Tippe auf Anziehen, wenn du es trägst. Tippe auf ein Teil, um nur dieses zu tauschen.",
+    "kamera": "Der runde Knopf in der Mitte: Fotografiere neue Teile, Etiketten oder dein Outfit im Spiegel. Die App erkennt selbst, was es ist.",
+    "schrank": "Schrank: Alle deine Teile. Tippe auf ein Teil, um Details zu sehen und zu ändern."
+  },
+  "testleitung": {
+    "titel": "Testleitung",
+    "einleitung": "Wähle eine Aufgabe. Die App springt zum Start, du liest der Testperson die Aufgabe vor und zählst die Tipps.",
+    "zuruecksetzen": "Alles zurücksetzen",
+    "zurueckgesetzt": "Zurückgesetzt.",
+    "aufgabe": "Aufgabe: {text}",
+    "morgens": "Zieh das vorgeschlagene Outfit für heute an.",
+    "schuhe": "Du möchtest heute andere Schuhe tragen.",
+    "abends": "Es ist Abend. Leg das Outfit für morgen fest.",
+    "neuesTeil": "Füge die neue Jeans deinem Schrank hinzu.",
+    "galerie": "Füge mehrere Teile auf einmal aus deinen Fotos hinzu.",
+    "kaufcheck": "Du bist im Laden. Prüfe, ob der Pullover zu deinem Schrank passt.",
+    "selfie": "Du hast heute etwas anderes angezogen. Trag es mit einem Spiegel-Selfie ein.",
+    "waesche": "Die Wäsche ist voll. Finde heraus, wie du sie waschen sollst, und trag ein, dass sie gewaschen ist.",
+    "verkaufen": "Verkauf den Mantel, den du lange nicht getragen hast.",
+    "farbtyp": "Finde heraus, welche Farben dir stehen.",
+    "erweiterung": "Schalte die Test-Erweiterung ein und wieder aus."
+  },
+  "server": {
+    "pruefe": "Verbindung wird geprüft …",
+    "ok": "Server antwortet.",
+    "fehler": "Server gerade nicht erreichbar.",
+    "nichtEingerichtet": "Server noch nicht eingerichtet."
+  },
+  "datenbank": {
+    "fehler": "Deine Daten konnten nicht geöffnet werden. Bitte öffne die App neu."
+  }
+}
