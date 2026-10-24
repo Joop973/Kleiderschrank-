@@ -187,7 +187,8 @@
     "einstellungen": "Einstellungen",
     "hilfe": "Hilfe",
     "datenschutz": "Datenschutz",
-    "testleitung": "Testleitung (nur für Nutzertests)"
+    "testleitung": "Testleitung (nur für Nutzertests)",
+    "machbarkeit": "Machbarkeitstest Bilder (Phase 2)"
   },
   "erweiterungen": {
     "titel": "Erweiterungen",
@@ -259,5 +260,30 @@
   },
   "datenbank": {
     "fehler": "Deine Daten konnten nicht geöffnet werden. Bitte öffne die App neu."
+  },
+  "machbarkeit": {
+    "titel": "Machbarkeitstest",
+    "einleitung": "Wähle Testfotos: Kleidungsstücke für das Freistellen, Spiegel-Selfies für die Gesichter. Bewerte danach jedes Ergebnis.",
+    "lokal": "Alles läuft auf deinem Handy. Nichts wird hochgeladen.",
+    "waehlen": "Testfotos wählen",
+    "laedt": "Bild {nummer} von {gesamt} … Beim ersten Mal werden die Modelle geladen (etwa 40 MB).",
+    "foto": "Foto {nummer}",
+    "freigestellt": "Freigestellt in {sekunden} s",
+    "unplausibel": "Freistellen unsicher: die App würde das Originalfoto nehmen.",
+    "gesichter": "Gesichter: {anzahl}, {quelle}, {sekunden} s",
+    "quelleGesicht": "per Gesichtserkennung",
+    "quelleKoerper": "über die Körperhaltung",
+    "quelleKeins": "nichts gefunden, Foto würde nicht hochgeladen",
+    "frageFreistellen": "Freistellen brauchbar?",
+    "frageGesicht": "Gesicht unkenntlich?",
+    "ja": "Ja",
+    "nein": "Nein",
+    "keinGesicht": "Kein Gesicht im Bild",
+    "zusammenfassung": "{anzahl} Fotos. Freistellen brauchbar: {freistellen}. Gesichter unkenntlich: {gesichter}. Freistellen im Schnitt {sekunden} s.",
+    "ziel": "Ziel laut Plan: Freistellen mindestens 80 % brauchbar und höchstens 6 s; jedes Gesicht unkenntlich.",
+    "speichern": "Ergebnis speichern",
+    "nurBrowser": "Dieser Test läuft nur in der Webapp.",
+    "fehler": "Fehler bei Foto {nummer}: {text}",
+    "offen": "noch offen"
   }
 }

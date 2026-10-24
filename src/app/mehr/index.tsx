@@ -49,6 +49,11 @@ export default function Mehr() {
       </Karte>
       <Karte style={{ padding: 0, overflow: 'hidden' }}>
         <ListenZeile
+          titel={t('mehr.machbarkeit')}
+          symbol="flask-outline"
+          onPress={() => router.push('/mehr/machbarkeit')}
+        />
+        <ListenZeile
           titel={t('mehr.testleitung')}
           symbol="clipboard-outline"
           onPress={() => router.push('/mehr/testleitung')}
