@@ -30,6 +30,75 @@ export const KERN_MIGRATIONEN: readonly string[] = [
     updated_at TEXT NOT NULL
   );
   `,
+  // 2: Schrank, Tragen und Wäsche (Plan 8)
+  `
+  CREATE TABLE items (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    subcategory TEXT,
+    pattern TEXT,
+    cut TEXT,
+    details_json TEXT NOT NULL DEFAULT '{}',
+    formality INTEGER,
+    seasons_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'active',
+    purchase_price_cents INTEGER,
+    purchase_date TEXT,
+    shop TEXT,
+    favorite INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT
+  );
+  CREATE TABLE item_colors (
+    item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    rank INTEGER NOT NULL,
+    hex TEXT NOT NULL,
+    lab_l REAL,
+    lab_a REAL,
+    lab_b REAL,
+    name_de TEXT,
+    PRIMARY KEY (item_id, rank)
+  );
+  CREATE TABLE item_labels (
+    item_id TEXT PRIMARY KEY NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    brand TEXT,
+    size_system TEXT,
+    size_value TEXT,
+    size_secondary TEXT,
+    composition_json TEXT,
+    origin TEXT,
+    article_no TEXT
+  );
+  CREATE TABLE item_care (
+    item_id TEXT PRIMARY KEY NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    symbols_json TEXT NOT NULL DEFAULT '[]',
+    care_effort TEXT
+  );
+  CREATE TABLE laundry_state (
+    item_id TEXT PRIMARY KEY NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    state TEXT NOT NULL DEFAULT 'clean',
+    wears_since_wash INTEGER NOT NULL DEFAULT 0,
+    washes_total INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE wear_logs (
+    id TEXT PRIMARY KEY NOT NULL,
+    date TEXT NOT NULL,
+    outfit_id TEXT,
+    event_title TEXT,
+    weather_json TEXT,
+    feedback_json TEXT,
+    source TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE wear_log_items (
+    wear_log_id TEXT NOT NULL REFERENCES wear_logs(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL REFERENCES items(id),
+    PRIMARY KEY (wear_log_id, item_id)
+  );
+  CREATE INDEX wear_log_items_item ON wear_log_items (item_id);
+  `,
 ];
 
 /** Bringt die Datenbank auf den neuesten Stand. Schema und Version ändern sich gemeinsam oder gar nicht. */

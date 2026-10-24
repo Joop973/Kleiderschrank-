@@ -8,6 +8,12 @@
   NODE_VERSION = "22"
   EXPO_NO_TELEMETRY = "1"
 
+# Service Worker immer frisch laden, damit Updates ankommen.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 # Alle Pfade an die App geben (Expo Router im Browser).
 [[redirects]]
   from = "/*"

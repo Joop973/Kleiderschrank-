@@ -52,3 +52,28 @@ describe('naechstesTeil', () => {
     expect(naechstesTeil(BEISPIEL_TEILE, 'gibt-es-nicht')).toBeUndefined();
   });
 });
+
+describe('inReihe', () => {
+  it('führt Arbeiten nacheinander aus, auch nach einem Fehler', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { inReihe } = require('../store') as typeof import('../store');
+    const log: string[] = [];
+    const warte = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const a = inReihe(async () => {
+      await warte(20);
+      log.push('a');
+    });
+    const b = inReihe(async () => {
+      log.push('b');
+      throw new Error('kaputt');
+    });
+    const c = inReihe(async () => {
+      log.push('c');
+      return 3;
+    });
+    await a;
+    await expect(b).rejects.toThrow('kaputt');
+    await expect(c).resolves.toBe(3);
+    expect(log).toEqual(['a', 'b', 'c']);
+  });
+});

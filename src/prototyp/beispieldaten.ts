@@ -1,28 +1,10 @@
-import type { KleidungsArt } from '../core/wardrobe/KleidungsBild';
+import type { Teil } from '../core/wardrobe/teil';
 
 /**
  * Beispieldaten für den Klick-Prototyp (Phase 1, ohne echte Logik).
  * Werden ab Phase 3 durch echte Daten aus der Datenbank ersetzt.
  */
-export type Kategorie = 'oberteil' | 'schicht' | 'unterteil' | 'kleid' | 'schuhe' | 'accessoire';
-
-export type Teil = {
-  id: string;
-  name: string;
-  kategorie: Kategorie;
-  art: KleidungsArt;
-  farbe: string;
-  farbname: string;
-  marke: string;
-  groesse: string;
-  material: string;
-  pflege: string;
-  pflegeaufwand: 'wenig' | 'mittel' | 'viel';
-  preisCent: number;
-  getragen: number;
-  zuletzt: string;
-  inWaesche?: boolean;
-};
+export type { Kategorie, Teil } from '../core/wardrobe/teil';
 
 export const BEISPIEL_TEILE: Teil[] = [
   {

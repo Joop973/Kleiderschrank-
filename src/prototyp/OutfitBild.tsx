@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { KleidungsBild } from '../core/wardrobe/KleidungsBild';
 import { t } from '../i18n';
@@ -25,7 +25,10 @@ export function OutfitBild({
   const { farben } = useThema();
   const wischHandler = useWischen(onWischen);
 
-  const bild = groesse === 'gross' ? 92 : 56;
+  // Auf kleinen Bildschirmen kleiner, damit die Hinweiskarte darunter sichtbar bleibt.
+  const { height } = useWindowDimensions();
+  const bild =
+    groesse === 'gross' ? Math.round(Math.min(92, Math.max(60, (height - 500) / 2.4))) : 56;
   return (
     <View
       {...(onWischen ? wischHandler : {})}

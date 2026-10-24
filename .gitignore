@@ -40,3 +40,5 @@ yarn-error.*
 /ios
 /android
 tests/browser/bilder/
+.netlify
+public/vision/

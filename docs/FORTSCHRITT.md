@@ -26,12 +26,26 @@ Phase 0 ist noch nicht abgenommen (Einrichtung durch Entwickler offen). Phase 1 
 - Testleitung in "Mehr" für Nutzertests
 - Browser-Test `npm run test:browser`
 
+## Phase 2 (vorgezogen) – Stand
+- [x] Freistellen im Browser (U²-Net klein), im Test-Browser: synthetisches T-Shirt korrekt freigestellt, 0,7–2,3 s pro Foto (Server-CPU, nicht iPhone)
+- [x] Gesichter verpixeln im Browser (MediaPipe Gesicht, Rückfall Körperhaltung); mit echten Gesichtern noch nicht getestet
+- [x] Testbildschirm: Mehr → "Machbarkeitstest Bilder" mit Bewertung, Auswertung gegen die Ziele und Export als JSON
+- [ ] Messung auf dem iPhone mit 20 Kleidungsfotos und Spiegel-Selfies (Entwickler)
+- [ ] KI-Teil (Edge Function ai-vision, Mistral, Gerätekonto, Kontingent): wartet auf Supabase und Mistral-Konto
+- [ ] Gruppierung, Größenschilder, Pflegeetiketten (brauchen KI)
+
 ## Bekannte Grenzen
 - Safari auf dem iPhone nicht getestet (nur Chromium); SQLite im Browser braucht iOS 17 oder neuer.
-- Auf kleinen Bildschirmen liegt die Hinweiskarte teils unter der Tab-Leiste (scrollen nötig).
-- Alles außer Erscheinungsbild und Erweiterungen ist Beispieldaten im Speicher; nach Neuladen ist der Prototyp zurückgesetzt.
+- Große Systemschrift: Safari übernimmt die iOS-Schriftgröße für Webseiten nicht automatisch; nicht geprüft.
+- Ohne Netz startet die App (Service Worker), die Bild-Modelle sind aber nur offline da, wenn sie einmal geladen wurden.
 
 ## Sitzungsprotokoll
+
+### 2026-10-24
+- PR #1 und #2 gemergt; Regel: Claude mergt eigene PRs nach grüner Prüfung.
+- Mängel behoben: Teile, Anziehen, Selfie-Eintrag und Wäsche werden gespeichert; Offline-Start; Hinweiskarte bleibt sichtbar.
+- Phase 2 auf dem Gerät vorgezogen (Freistellen, Gesichter, Testbildschirm).
+- Netlify-Projekt "schrank-app" angelegt; Verbindung zu GitHub fehlt noch (docs/EINRICHTUNG.md, Schritt 3).
 
 ### 2026-10-23
 - Bauplan, CLAUDE.md, docs angelegt; Plan auf Webapp-Prototyp umgestellt; Phase 0 umgesetzt (PR #1).

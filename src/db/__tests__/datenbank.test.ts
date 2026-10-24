@@ -1,5 +1,5 @@
 import type { ErweiterungsManifest } from '../../core/steckplaetze/typen';
-import { migriere } from '../migrationen';
+import { KERN_MIGRATIONEN, migriere } from '../migrationen';
 import { leseEinstellung, schreibeEinstellung } from '../repositories/einstellungen';
 import {
   leseErweiterungsZustand,
@@ -9,6 +9,8 @@ import {
 } from '../repositories/erweiterungen';
 import { leseHinweisVerlauf, merkeGezeigt, merkeWeggetippt } from '../repositories/hinweise';
 import { erzeugeTestDatenbank } from '../../../tests/hilfen/testDatenbank';
+
+const V = KERN_MIGRATIONEN.length;
 
 const testErweiterung: ErweiterungsManifest = {
   id: 'E99',
@@ -29,40 +31,37 @@ async function neueDb() {
 describe('migriere', () => {
   it('legt das Schema an und setzt die Version', async () => {
     const db = erzeugeTestDatenbank();
-    expect(await migriere(db)).toBe(1);
-    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: 1 });
+    expect(await migriere(db)).toBe(V);
+    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: V });
   });
 
   it('ist beim zweiten Start ohne Wirkung und behält Daten', async () => {
     const db = await neueDb();
     await schreibeEinstellung(db, 'thema', 'dunkel');
-    expect(await migriere(db)).toBe(1);
+    expect(await migriere(db)).toBe(V);
     expect(await leseEinstellung(db, 'thema')).toBe('dunkel');
   });
 
   it('rüstet eine ältere Version nach, ohne Daten zu verlieren', async () => {
     const db = await neueDb();
     await schreibeEinstellung(db, 'thema', 'hell');
-    await migriere(db, [
-      'CREATE TABLE IF NOT EXISTS settings (key TEXT);',
-      'CREATE TABLE neu (id TEXT);',
-    ]);
-    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: 2 });
+    await migriere(db, [...KERN_MIGRATIONEN, 'CREATE TABLE neu (id TEXT);']);
+    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: V + 1 });
     expect(await leseEinstellung(db, 'thema')).toBe('hell');
   });
 
   it('rollt eine fehlgeschlagene Migration vollständig zurück', async () => {
     const db = await neueDb();
     await expect(
-      migriere(db, ['SELECT 1;', 'CREATE TABLE a (id TEXT); KAPUTT;']),
+      migriere(db, [...KERN_MIGRATIONEN, 'SELECT 1;', 'CREATE TABLE a (id TEXT); KAPUTT;']),
     ).rejects.toThrow();
-    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: 1 });
+    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: V });
     expect(await db.getFirstAsync("SELECT name FROM sqlite_master WHERE name = 'a'")).toBeNull();
   });
 
   it('verweigert eine neuere Datenbank', async () => {
     const db = await neueDb();
-    await expect(migriere(db, [])).rejects.toThrow('neuer');
+    await expect(migriere(db, KERN_MIGRATIONEN.slice(0, 1))).rejects.toThrow('neuer');
   });
 });
 

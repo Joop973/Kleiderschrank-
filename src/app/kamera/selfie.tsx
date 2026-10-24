@@ -21,7 +21,7 @@ import {
 export default function Selfie() {
   const { farben } = useThema();
   const teile = usePrototyp((s) => s.teile);
-  const zeigeLeiste = usePrototyp((s) => s.zeigeLeiste);
+  const trageSelfieEin = usePrototyp((s) => s.trageSelfieEin);
   const kameraLeeren = usePrototyp((s) => s.kameraLeeren);
   const [schuhe, setSchuhe] = useState('t12');
   const sicher = ['t8', 't1'].map((id) => teilMitId(teile, id)).filter((x) => x !== undefined);
@@ -30,7 +30,7 @@ export default function Selfie() {
   const ja = () => {
     kameraLeeren();
     router.dismissTo('/');
-    zeigeLeiste(t('selfie.gespeichert'));
+    trageSelfieEin([...sicher.map((teil) => teil.id), schuhe]);
   };
 
   return (

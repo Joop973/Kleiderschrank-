@@ -24,10 +24,12 @@ const AUFGABEN: { szenario: Szenario; text: TextSchluessel; start: Href }[] = [
 export default function Testleitung() {
   const db = useDatenbank();
   const setzeSzenario = usePrototyp((s) => s.setzeSzenario);
+  const setzeSchrankZurueck = usePrototyp((s) => s.setzeSchrankZurueck);
   const zeigeLeiste = usePrototyp((s) => s.zeigeLeiste);
 
   const starte = async (szenario: Szenario, start: Href) => {
     await loescheHinweisVerlauf(db);
+    await setzeSchrankZurueck();
     setzeSzenario(szenario);
     router.dismissTo('/');
     if (start !== '/') router.push(start);
@@ -50,6 +52,7 @@ export default function Testleitung() {
         symbol="refresh"
         onPress={async () => {
           await loescheHinweisVerlauf(db);
+          await setzeSchrankZurueck();
           setzeSzenario('morgens');
           zeigeLeiste(t('testleitung.zurueckgesetzt'));
         }}

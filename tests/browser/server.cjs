@@ -11,6 +11,9 @@ const typen = {
   '.ttf': 'font/ttf',
   '.json': 'application/json',
   '.webmanifest': 'application/manifest+json',
+  '.onnx': 'application/octet-stream',
+  '.mjs': 'text/javascript',
+  '.tflite': 'application/octet-stream',
   '.ico': 'image/x-icon',
 };
 http

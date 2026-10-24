@@ -31,7 +31,14 @@ let fehlgeschlagen = 0;
   const p = await c.newPage();
   const fehler = [];
   p.on('pageerror', (e) => fehler.push('pageerror: ' + e.message));
-  p.on('console', (m) => m.type() === 'error' && fehler.push('console: ' + m.text().slice(0, 200)));
+  // MediaPipe meldet harmlose Infos über console.error ("INFO: Created TensorFlow Lite ...").
+  p.on(
+    'console',
+    (m) =>
+      m.type() === 'error' &&
+      !m.text().startsWith('INFO:') &&
+      fehler.push('console: ' + m.text().slice(0, 200)),
+  );
   let tipps = 0;
   const tippe = async (name, opts = {}) => {
     const el = p.getByRole(opts.rolle || 'button', { name, exact: opts.exact ?? false }).first();
@@ -61,7 +68,7 @@ let fehlgeschlagen = 0;
   const aufgabe = async (text) => {
     await p.goto(URL + '/mehr/testleitung', { waitUntil: 'networkidle' });
     await p.getByRole('button', { name: text }).first().click();
-    await p.waitForTimeout(600);
+    await p.waitForTimeout(1200);
     tipps = 0;
   };
 
@@ -206,10 +213,11 @@ let fehlgeschlagen = 0;
       throw new Error('Bildschirm nach Ausschalten noch da');
   });
   await ablauf('Schrank-Suche', async () => {
+    await aufgabe('vorgeschlagene Outfit');
     await p.goto(URL + '/schrank', { waitUntil: 'networkidle' });
     await p.getByRole('textbox').fill('blaue Jeans');
     await p.waitForTimeout(300);
-    await sieht('1 Teile');
+    await sieht('1 Teil');
     await bild('21-suche');
   });
   await ablauf('Dunkelmodus bleibt nach Neuladen', async () => {
@@ -225,6 +233,65 @@ let fehlgeschlagen = 0;
     await p.goto(URL + '/', { waitUntil: 'networkidle' });
     await p.waitForTimeout(800);
     await bild('22-dunkel');
+  });
+  await ablauf('Neues Teil bleibt nach Neuladen', async () => {
+    await aufgabe('neue Jeans');
+    await tippe('Fotografieren');
+    await tippe('Foto machen');
+    await tippe('Ja, in den Schrank');
+    await sieht('17 Teile');
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForTimeout(800);
+    await sieht('17 Teile');
+  });
+  await ablauf('Anziehen bleibt nach Neuladen', async () => {
+    await aufgabe('vorgeschlagene Outfit');
+    await tippe('Anziehen');
+    await p.waitForTimeout(500);
+    await p.goto(URL + '/teil/t1', { waitUntil: 'networkidle' });
+    await sieht('23-mal getragen');
+  });
+  await ablauf('Start ohne Netz', async () => {
+    await p.goto(URL + '/', { waitUntil: 'networkidle' });
+    await p.waitForTimeout(1500);
+    await c.setOffline(true);
+    await p.reload({ waitUntil: 'load' });
+    await p.waitForTimeout(1500);
+    await sieht('Anziehen');
+    await c.setOffline(false);
+  });
+  await ablauf('Machbarkeitstest Freistellen und Gesichter', async () => {
+    await p.goto(URL + '/mehr/machbarkeit', { waitUntil: 'networkidle' });
+    const [auswahl] = await Promise.all([
+      p.waitForEvent('filechooser'),
+      p.getByRole('button', { name: 'Testfotos wählen' }).click(),
+    ]);
+    await auswahl.setFiles([
+      path.join(__dirname, 'fotos', 'tshirt.jpg'),
+      path.join(__dirname, 'fotos', 'leer.jpg'),
+    ]);
+    await p.getByText('Freigestellt in').nth(1).waitFor({ timeout: 120000 });
+    const zeilen = await p.getByText(/Freigestellt in|Gesichter:/).allInnerTexts();
+    zeilen.forEach((z) => console.log('     ' + z));
+    // Freigestelltes T-Shirt prüfen: Mitte undurchsichtig, Ecke durchsichtig
+    const pruefung = await p.evaluate(async () => {
+      const bilder = [...document.querySelectorAll('img')].filter((b) => b.src.startsWith('blob:'));
+      const quelle = bilder[1];
+      const leinwand = document.createElement('canvas');
+      leinwand.width = quelle.naturalWidth;
+      leinwand.height = quelle.naturalHeight;
+      const k = leinwand.getContext('2d');
+      k.drawImage(quelle, 0, 0);
+      const alpha = (x, y) =>
+        k.getImageData(Math.round(x * leinwand.width), Math.round(y * leinwand.height), 1, 1)
+          .data[3];
+      return { mitte: alpha(0.5, 0.55), ecke: alpha(0.03, 0.03) };
+    });
+    console.log('     Durchsichtigkeit Mitte/Ecke:', pruefung.mitte, pruefung.ecke);
+    if (pruefung.mitte < 200 || pruefung.ecke > 50) throw new Error('Freistellen falsch');
+    await p.getByRole('button', { name: 'Ja' }).first().click();
+    await sieht('Freistellen brauchbar: 100 %');
+    await bild('23-machbarkeit');
   });
   console.log('Fehler im Browser:', fehler);
   await b.close();
